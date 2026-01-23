@@ -1,5 +1,10 @@
-# python-docs-pdf
-PDF builds of Python documentation (work in progress)
+# python-docs-offline
+Offline builds of Python documentation in various formats:
+* PDF
+* Zipped offline HTML
+* Plain text
+* Texinfo
+* EPUB
 
 ## Rejected idea
 
