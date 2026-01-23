@@ -41,14 +41,19 @@ jobs:
       - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo
       - run: make dist-html
         working-directory: ./Doc
+        continue-on-error: true
       - run: make dist-text
         working-directory: ./Doc
+        continue-on-error: true
       - run: make dist-texinfo
         working-directory: ./Doc
+        continue-on-error: true
       - run: make dist-epub
         working-directory: ./Doc
+        continue-on-error: true
       - run: make dist-pdf
         working-directory: ./Doc
+        continue-on-error: true
       - name: Strip leading v from tag
         id: tag-no-v
         run: |
@@ -59,38 +64,47 @@ jobs:
         with:
           name: ${{ github.event.inputs.tag }}-docs-pdf-a4.zip
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-pdf-a4.zip
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-pdf-a4.tar.bz2
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-pdf-a4.tar.bz2
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-html.zip
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-html.zip
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-html.tar.bz2
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-html.tar.bz2
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-text.zip
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-text.zip
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-text.tar.bz2
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-text.tar.bz2
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-texinfo.zip
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-texinfo.zip
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs-texinfo.tar.bz2
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-texinfo.tar.bz2
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
           name: ${{ github.event.inputs.tag }}-docs.epub
           path: ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs.epub
+          if-no-files-found: ignore
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
@@ -107,27 +121,35 @@ jobs:
         run: |
           mkdir -p gh-pages/3
           # PDF
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-pdf-a4.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-pdf-a4.zip
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-pdf-a4.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-pdf-a4.tar.bz2
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-pdf-a4.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-pdf-a4.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-pdf-a4.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-pdf-a4.tar.bz2 2>/dev/null || true
           # HTML
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-html.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-html.zip
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-html.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-html.tar.bz2
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-html.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-html.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-html.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-html.tar.bz2 2>/dev/null || true
           # Text
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-text.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-text.zip
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-text.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-text.tar.bz2
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-text.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-text.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-text.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-text.tar.bz2 2>/dev/null || true
           # Texinfo
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-texinfo.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-texinfo.zip
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-texinfo.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-texinfo.tar.bz2
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-texinfo.zip gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-texinfo.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs-texinfo.tar.bz2 gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs-texinfo.tar.bz2 2>/dev/null || true
           # EPUB
-          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs.epub gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs.epub
+          cp ./Doc/dist/python-${{ steps.tag-no-v.outputs.tag_no_v }}-docs.epub gh-pages/3/python-${{ steps.majorminor.outputs.major_minor }}-docs.epub 2>/dev/null || true
       - name: Commit generated archives
+        id: commit
         run: |
           cd gh-pages
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add 3/python-${{ steps.majorminor.outputs.major_minor }}-docs-*
-          git commit -m "Update documentation archives for ${{ steps.majorminor.outputs.major_minor }}"
+          git add 3/python-${{ steps.majorminor.outputs.major_minor }}-docs-* || true
+          if git diff --cached --quiet; then
+            echo "No documentation archives to commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "Update documentation archives for ${{ steps.majorminor.outputs.major_minor }}"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
       - name: Push commit
+        if: steps.commit.outputs.has_changes == 'true'
         uses: ad-m/github-push-action@master
         with:
           branch: gh-pages
