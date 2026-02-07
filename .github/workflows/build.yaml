@@ -40,18 +40,23 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo
       - run: make dist-html
+        id: build-html
         working-directory: ./Doc
         continue-on-error: true
       - run: make dist-text
+        id: build-text
         working-directory: ./Doc
         continue-on-error: true
       - run: make dist-texinfo
+        id: build-texinfo
         working-directory: ./Doc
         continue-on-error: true
       - run: make dist-epub
+        id: build-epub
         working-directory: ./Doc
         continue-on-error: true
       - run: make dist-pdf
+        id: build-pdf
         working-directory: ./Doc
         continue-on-error: true
       - name: Strip leading v from tag
@@ -155,3 +160,29 @@ jobs:
           branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           directory: gh-pages
+      - name: Check for build failures
+        if: always()
+        run: |
+          failed_formats=()
+          if [ "${{ steps.build-html.outcome }}" == "failure" ]; then
+            failed_formats+=("HTML")
+          fi
+          if [ "${{ steps.build-text.outcome }}" == "failure" ]; then
+            failed_formats+=("Text")
+          fi
+          if [ "${{ steps.build-texinfo.outcome }}" == "failure" ]; then
+            failed_formats+=("Texinfo")
+          fi
+          if [ "${{ steps.build-epub.outcome }}" == "failure" ]; then
+            failed_formats+=("EPUB")
+          fi
+          if [ "${{ steps.build-pdf.outcome }}" == "failure" ]; then
+            failed_formats+=("PDF")
+          fi
+          
+          if [ ${#failed_formats[@]} -gt 0 ]; then
+            echo "The following format(s) failed to build: ${failed_formats[*]}"
+            exit 1
+          else
+            echo "All formats built successfully"
+          fi
