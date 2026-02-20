@@ -1,3 +1,4 @@
+name: build ${{ github.event.inputs.tag }}
 on:
   workflow_dispatch:
     inputs:
