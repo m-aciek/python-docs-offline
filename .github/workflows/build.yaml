@@ -1,4 +1,4 @@
-name: build ${{ github.event.inputs.tag }}
+run-name: build ${{ github.event.inputs.tag }}
 on:
   workflow_dispatch:
     inputs:
