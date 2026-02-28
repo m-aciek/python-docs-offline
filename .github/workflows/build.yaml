@@ -22,7 +22,7 @@ jobs:
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update
-      - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo
+      - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo librsvg2-bin
       - run: make dist-html
         id: build-html
         working-directory: ./Doc
