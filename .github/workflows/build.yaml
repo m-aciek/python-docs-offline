@@ -45,6 +45,10 @@ jobs:
         continue-on-error: true
       - uses: actions/upload-artifact@master
         with:
+          name: ${{ github.event.inputs.reference }}-pdf-logs.zip
+          path: ./Doc/build/latex/*.log
+      - uses: actions/upload-artifact@master
+        with:
           name: ${{ github.event.inputs.reference }}-docs-pdf-a4.zip
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.zip
           if-no-files-found: ignore
