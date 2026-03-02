@@ -45,51 +45,51 @@ jobs:
         continue-on-error: true
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-pdf-logs.zip
+          name: pdf-logs.zip
           path: ./Doc/build/latex/*.log
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-pdf-a4.zip
+          name: docs-pdf-a4.zip
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-pdf-a4.tar.bz2
+          name: docs-pdf-a4.tar.bz2
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-html.zip
+          name: docs-html.zip
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-html.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-html.tar.bz2
+          name: docs-html.tar.bz2
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-html.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-text.zip
+          name: docs-text.zip
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-text.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-text.tar.bz2
+          name: docs-text.tar.bz2
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-text.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-texinfo.zip
+          name: docs-texinfo.zip
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-texinfo.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-texinfo.tar.bz2
+          name: docs-texinfo.tar.bz2
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-texinfo.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs.epub
+          name: docs.epub
           path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs.epub
           if-no-files-found: ignore
       - name: Checkout gh-pages branch
