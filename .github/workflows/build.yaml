@@ -46,7 +46,9 @@ jobs:
       - uses: actions/upload-artifact@master
         with:
           name: pdf-logs.zip
-          path: ./Doc/build/latex/*.log
+          path: |
+            ./Doc/build/latex/*.log
+            ./Doc/build/latex/*.tex
       - uses: actions/upload-artifact@master
         with:
           name: docs-pdf-a4.zip
