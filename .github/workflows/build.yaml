@@ -21,7 +21,7 @@ on:
 permissions:
   contents: write
 jobs:
-  build:
+  build-html:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@master
@@ -33,105 +33,160 @@ jobs:
           ref: ${{ github.event.inputs.reference }}
       - run: make venv
         working-directory: ./Doc
-      - run: sudo apt-get update
-      - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo librsvg2-bin
+      - run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
       - run: make dist-html
-        id: build-html
         working-directory: ./Doc
-        continue-on-error: true
-      - run: make dist-text
-        id: build-text
-        working-directory: ./Doc
-        continue-on-error: true
-      - run: make dist-texinfo
-        id: build-texinfo
-        working-directory: ./Doc
-        continue-on-error: true
-      - run: make dist-epub
-        id: build-epub
-        working-directory: ./Doc
-        continue-on-error: true
-      - run: make dist-pdf
-        id: build-pdf
-        working-directory: ./Doc
-        continue-on-error: true
       - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-html.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.zip
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-html.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2
+          if-no-files-found: ignore
+  build-text:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: 3
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.reference }}
+      - run: make venv
+        working-directory: ./Doc
+      - run: make dist-text
+        working-directory: ./Doc
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-text.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.zip
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-text.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2
+          if-no-files-found: ignore
+  build-texinfo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: 3
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.reference }}
+      - run: make venv
+        working-directory: ./Doc
+      - run: sudo apt-get update && sudo apt-get install -y texinfo
+      - run: make dist-texinfo
+        working-directory: ./Doc
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-texinfo.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-texinfo.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2
+          if-no-files-found: ignore
+  build-epub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: 3
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.reference }}
+      - run: make venv
+        working-directory: ./Doc
+      - run: make dist-epub
+        working-directory: ./Doc
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs.epub
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub
+          if-no-files-found: ignore
+  build-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: 3
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.reference }}
+      - run: make venv
+        working-directory: ./Doc
+      - run: sudo apt-get update && sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy
+      - run: make dist-pdf
+        working-directory: ./Doc
+      - uses: actions/upload-artifact@master
+        if: always()
         with:
           name: pdf-logs.zip
           path: |
             ./Doc/build/latex/*.log
             ./Doc/build/latex/*.tex
       - uses: actions/upload-artifact@master
+        if: always()
         with:
           name: docs-pdf-a4.zip
           path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
+        if: always()
         with:
           name: docs-pdf-a4.tar.bz2
           path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs-html.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.zip
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs-html.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs-text.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.zip
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs-text.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs-texinfo.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs-texinfo.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2
-          if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
-        with:
-          name: docs.epub
-          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub
-          if-no-files-found: ignore
+  publish:
+    needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
+    if: ${{ !cancelled() && github.event.inputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout gh-pages branch
-        if: ${{ github.event.inputs.publish == 'true' }}
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: gh-pages
+      - name: Download all artifacts
+        uses: actions/download-artifact@master
+        with:
+          path: artifacts
       - name: Copy generated archives to gh-pages
-        if: ${{ github.event.inputs.publish == 'true' }}
         run: |
           mkdir -p gh-pages/3
           # PDF
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2 2>/dev/null || true
+          cp artifacts/docs-pdf-a4.zip/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/docs-pdf-a4.tar.bz2/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # HTML
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-html.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2 2>/dev/null || true
+          cp artifacts/docs-html.zip/python-${{ github.event.inputs.dist_version }}-docs-html.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/docs-html.tar.bz2/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # Text
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-text.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2 2>/dev/null || true
+          cp artifacts/docs-text.zip/python-${{ github.event.inputs.dist_version }}-docs-text.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/docs-text.tar.bz2/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # Texinfo
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2 2>/dev/null || true
+          cp artifacts/docs-texinfo.zip/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/docs-texinfo.tar.bz2/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # EPUB
-          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs.epub 2>/dev/null || true
+          cp artifacts/docs.epub/python-${{ github.event.inputs.dist_version }}-docs.epub gh-pages/3/ 2>/dev/null || true
       - name: Commit generated archives
-        if: ${{ github.event.inputs.publish == 'true' }}
         id: commit
         run: |
           cd gh-pages
@@ -146,35 +201,9 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
       - name: Push commit
-        if: ${{ github.event.inputs.publish == 'true' && steps.commit.outputs.has_changes == 'true' }}
+        if: steps.commit.outputs.has_changes == 'true'
         uses: ad-m/github-push-action@master
         with:
           branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           directory: gh-pages
-      - name: Check for build failures
-        if: always()
-        run: |
-          failed_formats=()
-          if [ "${{ steps.build-html.outcome }}" == "failure" ]; then
-            failed_formats+=("HTML")
-          fi
-          if [ "${{ steps.build-text.outcome }}" == "failure" ]; then
-            failed_formats+=("Text")
-          fi
-          if [ "${{ steps.build-texinfo.outcome }}" == "failure" ]; then
-            failed_formats+=("Texinfo")
-          fi
-          if [ "${{ steps.build-epub.outcome }}" == "failure" ]; then
-            failed_formats+=("EPUB")
-          fi
-          if [ "${{ steps.build-pdf.outcome }}" == "failure" ]; then
-            failed_formats+=("PDF")
-          fi
-          
-          if [ ${#failed_formats[@]} -gt 0 ]; then
-            echo "The following format(s) failed to build: ${failed_formats[*]}"
-            exit 1
-          else
-            echo "All formats built successfully"
-          fi
