@@ -33,7 +33,6 @@ jobs:
           ref: ${{ github.event.inputs.reference }}
       - run: make venv
         working-directory: ./Doc
-      - run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
       - run: make dist-html
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
@@ -133,7 +132,7 @@ jobs:
           ref: ${{ github.event.inputs.reference }}
       - run: make venv
         working-directory: ./Doc
-      - run: sudo apt-get update && sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy
+      - run: sudo apt-get update && sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy librsvg2-bin
       - run: make dist-pdf
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
