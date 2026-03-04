@@ -1,4 +1,4 @@
-run-name: build ${{ github.event.inputs.reference }}:${{ github.event.inputs.reference }}
+run-name: build ${{ github.event.inputs.repository }}:${{ github.event.inputs.reference }}
 on:
   workflow_dispatch:
     inputs:
