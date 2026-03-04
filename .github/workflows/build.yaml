@@ -1,4 +1,4 @@
-run-name: build ${{ github.event.inputs.reference }}
+run-name: build ${{ github.event.inputs.reference }}:${{ github.event.inputs.reference }}
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +10,10 @@ on:
         description: 'Dist version (compatible with patchlevel.py output)'
         required: true
         default: '3.14'
+      repository:
+        description: 'Repository to checkout'
+        required: true
+        default: 'python/cpython'
 permissions:
   contents: write
 jobs:
@@ -21,7 +25,7 @@ jobs:
           python-version: 3
       - uses: actions/checkout@master
         with:
-          repository: m-aciek/cpython
+          repository: ${{ github.event.inputs.repository }}
           ref: ${{ github.event.inputs.reference }}
       - run: make venv
         working-directory: ./Doc
