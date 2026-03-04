@@ -12,11 +12,11 @@ on:
         default: '3.14'
       repository:
         description: 'Repository to checkout'
-        required: true
+        required: false
         default: 'python/cpython'
       publish:
         description: 'Publish to GitHub Pages'
-        required: true
+        required: false
         default: false
 permissions:
   contents: write
@@ -107,13 +107,13 @@ jobs:
           path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub
           if-no-files-found: ignore
       - name: Checkout gh-pages branch
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: gh-pages
       - name: Copy generated archives to gh-pages
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         run: |
           mkdir -p gh-pages/3
           # PDF
@@ -131,7 +131,7 @@ jobs:
           # EPUB
           cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs.epub 2>/dev/null || true
       - name: Commit generated archives
-        if: ${{ github.event.inputs.publish }}
+        if: ${{ github.event.inputs.publish == 'true' }}
         id: commit
         run: |
           cd gh-pages
@@ -146,7 +146,7 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
       - name: Push commit
-        if: ${{ github.event.inputs.publish && steps.commit.outputs.has_changes == 'true' }}
+        if: ${{ github.event.inputs.publish == 'true' && steps.commit.outputs.has_changes == 'true' }}
         uses: ad-m/github-push-action@master
         with:
           branch: gh-pages
