@@ -1,4 +1,4 @@
-run-name: build ${{ github.event.inputs.reference }}
+run-name: build ${{ github.event.inputs.repository }}:${{ github.event.inputs.reference }}
 on:
   workflow_dispatch:
     inputs:
@@ -6,6 +6,18 @@ on:
         description: 'Commit reference from CPython repository'
         required: true
         default: '3.14'
+      dist_version:
+        description: 'Dist version (compatible with patchlevel.py output)'
+        required: true
+        default: '3.14'
+      repository:
+        description: 'Repository to checkout'
+        required: false
+        default: 'python/cpython'
+      publish:
+        description: 'Publish to GitHub Pages'
+        required: false
+        default: false
 permissions:
   contents: write
 jobs:
@@ -17,12 +29,12 @@ jobs:
           python-version: 3
       - uses: actions/checkout@master
         with:
-          repository: python/cpython
+          repository: ${{ github.event.inputs.repository }}
           ref: ${{ github.event.inputs.reference }}
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update
-      - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo
+      - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo librsvg2-bin
       - run: make dist-html
         id: build-html
         working-directory: ./Doc
@@ -45,87 +57,96 @@ jobs:
         continue-on-error: true
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-pdf-a4.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.zip
+          name: pdf-logs.zip
+          path: |
+            ./Doc/build/latex/*.log
+            ./Doc/build/latex/*.tex
+      - uses: actions/upload-artifact@master
+        with:
+          name: docs-pdf-a4.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-pdf-a4.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.tar.bz2
+          name: docs-pdf-a4.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-html.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-html.zip
+          name: docs-html.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-html.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-html.tar.bz2
+          name: docs-html.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-text.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-text.zip
+          name: docs-text.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-text.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-text.tar.bz2
+          name: docs-text.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-texinfo.zip
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-texinfo.zip
+          name: docs-texinfo.zip
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs-texinfo.tar.bz2
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-texinfo.tar.bz2
+          name: docs-texinfo.tar.bz2
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ github.event.inputs.reference }}-docs.epub
-          path: ./Doc/dist/python-${{ github.event.inputs.reference }}-docs.epub
+          name: docs.epub
+          path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub
           if-no-files-found: ignore
       - name: Checkout gh-pages branch
+        if: ${{ github.event.inputs.publish == 'true' }}
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: gh-pages
       - name: Copy generated archives to gh-pages
+        if: ${{ github.event.inputs.publish == 'true' }}
         run: |
           mkdir -p gh-pages/3
           # PDF
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.zip gh-pages/3/python-${{ github.event.inputs.reference }}-docs-pdf-a4.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-pdf-a4.tar.bz2 gh-pages/3/python-${{ github.event.inputs.reference }}-docs-pdf-a4.tar.bz2 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2 2>/dev/null || true
           # HTML
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-html.zip gh-pages/3/python-${{ github.event.inputs.reference }}-docs-html.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-html.tar.bz2 gh-pages/3/python-${{ github.event.inputs.reference }}-docs-html.tar.bz2 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-html.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-html.tar.bz2 2>/dev/null || true
           # Text
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-text.zip gh-pages/3/python-${{ github.event.inputs.reference }}-docs-text.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-text.tar.bz2 gh-pages/3/python-${{ github.event.inputs.reference }}-docs-text.tar.bz2 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-text.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-text.tar.bz2 2>/dev/null || true
           # Texinfo
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-texinfo.zip gh-pages/3/python-${{ github.event.inputs.reference }}-docs-texinfo.zip 2>/dev/null || true
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs-texinfo.tar.bz2 gh-pages/3/python-${{ github.event.inputs.reference }}-docs-texinfo.tar.bz2 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-texinfo.zip 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2 2>/dev/null || true
           # EPUB
-          cp ./Doc/dist/python-${{ github.event.inputs.reference }}-docs.epub gh-pages/3/python-${{ github.event.inputs.reference }}-docs.epub 2>/dev/null || true
+          cp ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs.epub gh-pages/3/python-${{ github.event.inputs.dist_version }}-docs.epub 2>/dev/null || true
       - name: Commit generated archives
+        if: ${{ github.event.inputs.publish == 'true' }}
         id: commit
         run: |
           cd gh-pages
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add 3/python-${{ github.event.inputs.reference }}-docs-* || true
+          git add 3/python-${{ github.event.inputs.dist_version }}-docs-* || true
           if git diff --cached --quiet; then
             echo "No documentation archives to commit"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            git commit -m "Update documentation archives for ${{ github.event.inputs.reference }}"
+            git commit -m "Update documentation archives for ${{ github.event.inputs.dist_version }}"
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
       - name: Push commit
-        if: steps.commit.outputs.has_changes == 'true'
+        if: ${{ github.event.inputs.publish == 'true' && steps.commit.outputs.has_changes == 'true' }}
         uses: ad-m/github-push-action@master
         with:
           branch: gh-pages
