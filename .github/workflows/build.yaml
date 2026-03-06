@@ -31,7 +31,7 @@ jobs:
         with:
           repository: ${{ github.event.inputs.repository }}
           ref: ${{ github.event.inputs.reference }}
-      - run: make venv
+      - run: make venv-pdf
         working-directory: ./Doc
       - run: sudo apt-get update
       - run: sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy texinfo librsvg2-bin
