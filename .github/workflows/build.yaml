@@ -154,8 +154,31 @@ jobs:
           name: docs-pdf-a4.tar.bz2
           path: ./Doc/dist/python-${{ github.event.inputs.dist_version }}-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
+  build-pdf-rinoh:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: 3
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.reference }}
+      - run: make venv
+        working-directory: ./Doc
+      - run: ./venv/bin/pip install rinohtype
+        working-directory: ./Doc
+      - run: ./venv/bin/sphinx-build -b rinoh . build/rinoh
+        working-directory: ./Doc
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: docs-pdf-rinoh
+          path: ./Doc/build/rinoh/
+          if-no-files-found: ignore
   publish:
-    needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
+    needs: [build-html, build-text, build-texinfo, build-epub, build-pdf, build-pdf-rinoh]
     if: ${{ !cancelled() && github.event.inputs.publish == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -185,13 +208,15 @@ jobs:
           cp artifacts/docs-texinfo.tar.bz2/python-${{ github.event.inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # EPUB
           cp artifacts/docs.epub/python-${{ github.event.inputs.dist_version }}-docs.epub gh-pages/3/ 2>/dev/null || true
+          # PDF (rinohtype, experimental)
+          cp artifacts/docs-pdf-rinoh/*.pdf gh-pages/3/ 2>/dev/null || true
       - name: Commit generated archives
         id: commit
         run: |
           cd gh-pages
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add 3/python-${{ github.event.inputs.dist_version }}-docs-* || true
+          git add 3/python-${{ github.event.inputs.dist_version }}-docs-* 3/*.pdf || true
           if git diff --cached --quiet; then
             echo "No documentation archives to commit"
             echo "has_changes=false" >> $GITHUB_OUTPUT
