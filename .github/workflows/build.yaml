@@ -167,7 +167,7 @@ jobs:
           ref: ${{ github.event.inputs.reference }}
       - run: make venv
         working-directory: ./Doc
-      - run: ./venv/bin/pip install rinohtype
+      - run: ./venv/bin/pip install git+https://github.com/brechtm/rinohtype
         working-directory: ./Doc
       - run: ./venv/bin/sphinx-build -b rinoh . build/rinoh
         working-directory: ./Doc
