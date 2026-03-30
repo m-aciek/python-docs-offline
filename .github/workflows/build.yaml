@@ -56,13 +56,13 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-html.zip
+          name: python-${{ inputs.dist_version }}-docs-html.zip
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-html.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-html.tar.bz2
+          name: python-${{ inputs.dist_version }}-docs-html.tar.bz2
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-html.tar.bz2
           if-no-files-found: ignore
   build-text:
@@ -82,13 +82,13 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-text.zip
+          name: python-${{ inputs.dist_version }}-docs-text.zip
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-text.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-text.tar.bz2
+          name: python-${{ inputs.dist_version }}-docs-text.tar.bz2
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-text.tar.bz2
           if-no-files-found: ignore
   build-texinfo:
@@ -109,13 +109,13 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-texinfo.zip
+          name: python-${{ inputs.dist_version }}-docs-texinfo.zip
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-texinfo.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-texinfo.tar.bz2
+          name: python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2
           if-no-files-found: ignore
   build-epub:
@@ -135,7 +135,7 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs.epub
+          name: python-${{ inputs.dist_version }}-docs.epub
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs.epub
           if-no-files-found: ignore
   build-pdf:
@@ -156,20 +156,20 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: pdf-logs.zip
+          name: python-${{ inputs.dist_version }}-pdf-logs.zip
           path: |
             ./Doc/build/latex/*.log
             ./Doc/build/latex/*.tex
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-pdf-a4.zip
+          name: python-${{ inputs.dist_version }}-docs-pdf-a4.zip
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: docs-pdf-a4.tar.bz2
+          name: python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2
           path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
   publish:
@@ -190,19 +190,19 @@ jobs:
         run: |
           mkdir -p gh-pages/3
           # PDF
-          cp artifacts/docs-pdf-a4.zip/python-${{ inputs.dist_version }}-docs-pdf-a4.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/docs-pdf-a4.tar.bz2/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.zip/python-${{ inputs.dist_version }}-docs-pdf-a4.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # HTML
-          cp artifacts/docs-html.zip/python-${{ inputs.dist_version }}-docs-html.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/docs-html.tar.bz2/python-${{ inputs.dist_version }}-docs-html.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-html.zip/python-${{ inputs.dist_version }}-docs-html.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-html.tar.bz2/python-${{ inputs.dist_version }}-docs-html.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # Text
-          cp artifacts/docs-text.zip/python-${{ inputs.dist_version }}-docs-text.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/docs-text.tar.bz2/python-${{ inputs.dist_version }}-docs-text.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-text.zip/python-${{ inputs.dist_version }}-docs-text.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-text.tar.bz2/python-${{ inputs.dist_version }}-docs-text.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # Texinfo
-          cp artifacts/docs-texinfo.zip/python-${{ inputs.dist_version }}-docs-texinfo.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/docs-texinfo.tar.bz2/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.zip/python-${{ inputs.dist_version }}-docs-texinfo.zip gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/ 2>/dev/null || true
           # EPUB
-          cp artifacts/docs.epub/python-${{ inputs.dist_version }}-docs.epub gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs.epub/python-${{ inputs.dist_version }}-docs.epub gh-pages/3/ 2>/dev/null || true
       - name: Commit generated archives
         id: commit
         run: |
