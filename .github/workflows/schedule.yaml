@@ -2,6 +2,7 @@ name: scheduled docs generation
 on:
   schedule:
     - cron: '0 5 * * *'
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
