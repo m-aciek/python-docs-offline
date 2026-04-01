@@ -217,7 +217,7 @@ jobs:
           cd gh-pages
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add 3/python-${{ inputs.dist_version }}-docs-* || true
+          git add 3/
           if git diff --cached --quiet; then
             echo "No documentation archives to commit"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
