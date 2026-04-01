@@ -16,7 +16,7 @@ jobs:
         id: get-versions
         run: |
           versions=$(curl -sf https://peps.python.org/api/release-cycle.json | \
-            jq -c '[to_entries[] | select(.value.status != "end-of-life") | {version: .key, branch: (.value.branch // .key)}]')
+            jq -c '[to_entries[] | select(.value.status != "end-of-life") | {version: .key, branch: (.value.branch // .key), python_version: (if .key == "3.10" then "3.12" else "3" end)}]')
           echo "versions=$versions" >> "$GITHUB_OUTPUT"
   build:
     needs: get-versions
@@ -28,4 +28,5 @@ jobs:
     with:
       reference: ${{ matrix.branch }}
       dist_version: ${{ matrix.version }}
+      python_version: ${{ matrix.python_version }}
       publish: ${{ 'true' }}

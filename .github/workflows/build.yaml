@@ -18,6 +18,10 @@ on:
         description: 'Publish to GitHub Pages'
         required: false
         default: false
+      python_version:
+        description: 'Python version used to generate docs'
+        required: false
+        default: '3'
   workflow_call:
     inputs:
       reference:
@@ -36,6 +40,10 @@ on:
         description: 'Publish to GitHub Pages'
         default: 'false'
         type: string
+      python_version:
+        description: 'Python version used to generate docs'
+        default: '3'
+        type: string
 permissions:
   contents: write
 jobs:
@@ -44,7 +52,7 @@ jobs:
     steps:
       - uses: actions/setup-python@master
         with:
-          python-version: 3
+          python-version: ${{ inputs.python_version }}
       - uses: actions/checkout@master
         with:
           repository: ${{ inputs.repository }}
@@ -70,7 +78,7 @@ jobs:
     steps:
       - uses: actions/setup-python@master
         with:
-          python-version: 3
+          python-version: ${{ inputs.python_version }}
       - uses: actions/checkout@master
         with:
           repository: ${{ inputs.repository }}
@@ -96,7 +104,7 @@ jobs:
     steps:
       - uses: actions/setup-python@master
         with:
-          python-version: 3
+          python-version: ${{ inputs.python_version }}
       - uses: actions/checkout@master
         with:
           repository: ${{ inputs.repository }}
@@ -123,7 +131,7 @@ jobs:
     steps:
       - uses: actions/setup-python@master
         with:
-          python-version: 3
+          python-version: ${{ inputs.python_version }}
       - uses: actions/checkout@master
         with:
           repository: ${{ inputs.repository }}
@@ -143,7 +151,7 @@ jobs:
     steps:
       - uses: actions/setup-python@master
         with:
-          python-version: 3
+          python-version: ${{ inputs.python_version }}
       - uses: actions/checkout@master
         with:
           repository: ${{ inputs.repository }}
