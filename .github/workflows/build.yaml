@@ -193,6 +193,8 @@ jobs:
         with:
           ref: gh-pages
           path: gh-pages
+      - name: Pull latest gh-pages
+        run: git -C gh-pages pull --rebase origin gh-pages
       - name: Download all artifacts
         uses: actions/download-artifact@master
         with:
@@ -214,8 +216,6 @@ jobs:
           cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2/* gh-pages/3/ 2>/dev/null || true
           # EPUB
           cp artifacts/python-${{ inputs.dist_version }}-docs.epub/* gh-pages/3/ 2>/dev/null || true
-      - name: Pull latest gh-pages
-        run: git -C gh-pages pull --rebase origin gh-pages
       - name: Commit generated archives
         id: commit
         run: |
