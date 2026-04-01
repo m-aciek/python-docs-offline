@@ -57,13 +57,13 @@ jobs:
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-html.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-html.zip
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-html.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-html.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-html.tar.bz2
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-html.tar.bz2
           if-no-files-found: ignore
   build-text:
     runs-on: ubuntu-latest
@@ -83,13 +83,13 @@ jobs:
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-text.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-text.zip
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-text.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-text.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-text.tar.bz2
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-text.tar.bz2
           if-no-files-found: ignore
   build-texinfo:
     runs-on: ubuntu-latest
@@ -110,13 +110,13 @@ jobs:
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-texinfo.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-texinfo.zip
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-texinfo.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-texinfo.tar.bz2
           if-no-files-found: ignore
   build-epub:
     runs-on: ubuntu-latest
@@ -136,7 +136,7 @@ jobs:
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs.epub
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs.epub
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs.epub
           if-no-files-found: ignore
   build-pdf:
     runs-on: ubuntu-latest
@@ -164,13 +164,13 @@ jobs:
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-pdf-a4.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-pdf-a4.zip
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
           name: python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2
+          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
   publish:
     needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
