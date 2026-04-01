@@ -184,6 +184,9 @@ jobs:
     needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
     if: ${{ !cancelled() && inputs.publish == 'true' }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-publish
+      cancel-in-progress: false
     steps:
       - name: Checkout gh-pages branch
         uses: actions/checkout@v5
@@ -211,6 +214,8 @@ jobs:
           cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2/* gh-pages/3/ 2>/dev/null || true
           # EPUB
           cp artifacts/python-${{ inputs.dist_version }}-docs.epub/* gh-pages/3/ 2>/dev/null || true
+      - name: Pull latest gh-pages
+        run: git -C gh-pages pull --rebase origin gh-pages
       - name: Commit generated archives
         id: commit
         run: |
