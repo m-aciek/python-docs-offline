@@ -198,19 +198,19 @@ jobs:
         run: |
           mkdir -p gh-pages/3
           # PDF
-          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.zip/python-${{ inputs.dist_version }}-docs-pdf-a4.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.zip/* gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2/* gh-pages/3/ 2>/dev/null || true
           # HTML
-          cp artifacts/python-${{ inputs.dist_version }}-docs-html.zip/python-${{ inputs.dist_version }}-docs-html.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-html.tar.bz2/python-${{ inputs.dist_version }}-docs-html.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-html.zip/* gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-html.tar.bz2/* gh-pages/3/ 2>/dev/null || true
           # Text
-          cp artifacts/python-${{ inputs.dist_version }}-docs-text.zip/python-${{ inputs.dist_version }}-docs-text.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-text.tar.bz2/python-${{ inputs.dist_version }}-docs-text.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-text.zip/* gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-text.tar.bz2/* gh-pages/3/ 2>/dev/null || true
           # Texinfo
-          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.zip/python-${{ inputs.dist_version }}-docs-texinfo.zip gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2 gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.zip/* gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2/* gh-pages/3/ 2>/dev/null || true
           # EPUB
-          cp artifacts/python-${{ inputs.dist_version }}-docs.epub/python-${{ inputs.dist_version }}-docs.epub gh-pages/3/ 2>/dev/null || true
+          cp artifacts/python-${{ inputs.dist_version }}-docs.epub/* gh-pages/3/ 2>/dev/null || true
       - name: Commit generated archives
         id: commit
         run: |
