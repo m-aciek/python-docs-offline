@@ -185,7 +185,7 @@ jobs:
     if: ${{ !cancelled() && inputs.publish == 'true' }}
     runs-on: ubuntu-latest
     concurrency:
-      group: gh-pages-publish
+      group: gh-pages-publish-${{ inputs.dist_version }}
       cancel-in-progress: false
     steps:
       - name: Checkout gh-pages branch
