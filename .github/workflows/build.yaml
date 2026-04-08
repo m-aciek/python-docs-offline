@@ -45,7 +45,9 @@ on:
         default: '3'
         type: string
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 jobs:
   build-html:
     runs-on: ubuntu-latest
@@ -184,56 +186,46 @@ jobs:
     needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
     if: ${{ !cancelled() && inputs.publish == 'true' }}
     runs-on: ubuntu-latest
-    concurrency:
-      group: gh-pages-publish
-      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout gh-pages branch
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Checkout existing gh-pages content
+        id: checkout-pages
         uses: actions/checkout@v5
         with:
           ref: gh-pages
-          path: gh-pages
-      - name: Pull latest gh-pages
-        run: git -C gh-pages pull --rebase origin gh-pages
+          path: _site
+        continue-on-error: true
+
+      - name: Prepare site directory
+        run: |
+          mkdir -p _site/3
+          # Remove git metadata; safe even if checkout above did not succeed
+          rm -rf _site/.git
+
       - name: Download all artifacts
-        uses: actions/download-artifact@master
+        # Collect all build artifacts then merge into the publish directory
+        uses: actions/download-artifact@v4
         with:
-          path: artifacts
-      - name: Copy generated archives to gh-pages
+          path: artifacts/
+
+      - name: Copy new archives into site directory
         run: |
-          mkdir -p gh-pages/3
-          # PDF
-          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.zip/* gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2/* gh-pages/3/ 2>/dev/null || true
-          # HTML
-          cp artifacts/python-${{ inputs.dist_version }}-docs-html.zip/* gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-html.tar.bz2/* gh-pages/3/ 2>/dev/null || true
-          # Text
-          cp artifacts/python-${{ inputs.dist_version }}-docs-text.zip/* gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-text.tar.bz2/* gh-pages/3/ 2>/dev/null || true
-          # Texinfo
-          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.zip/* gh-pages/3/ 2>/dev/null || true
-          cp artifacts/python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2/* gh-pages/3/ 2>/dev/null || true
-          # EPUB
-          cp artifacts/python-${{ inputs.dist_version }}-docs.epub/* gh-pages/3/ 2>/dev/null || true
-      - name: Commit generated archives
-        id: commit
-        run: |
-          cd gh-pages
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add 3/
-          if git diff --cached --quiet; then
-            echo "No documentation archives to commit"
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-          else
-            git commit -m "Update documentation archives for ${{ inputs.dist_version }}"
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Push commit
-        if: steps.commit.outputs.has_changes == 'true'
-        uses: ad-m/github-push-action@master
+          # Copy generated archives (zip, tar.bz2, epub) into _site/3/,
+          # excluding PDF build logs which are for debugging only.
+          find artifacts/ -type f \( -name "*.zip" -o -name "*.tar.bz2" -o -name "*.epub" \) \
+            ! -name "python-*-pdf-logs.zip" \
+            -exec cp {} _site/3/ \;
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          directory: gh-pages
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
