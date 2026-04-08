@@ -41,7 +41,6 @@ jobs:
     uses: ./.github/workflows/build.yaml
     with:
       reference: ${{ matrix.branch }}
-      dist_version: ${{ matrix.version }}
       python_version: ${{ matrix.python_version }}
       publish: ${{ 'false' }}
 
