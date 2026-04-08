@@ -4,8 +4,19 @@ on:
     - cron: '0 5 * * *'
   workflow_dispatch:
   push:
+
+# Pages deployment requires pages:write and id-token:write.
+# contents:write is no longer needed since we no longer push to gh-pages directly.
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent overlapping scheduled runs from deploying to GitHub Pages simultaneously.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   get-versions:
     runs-on: ubuntu-latest
@@ -24,9 +35,63 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.get-versions.outputs.versions) }}
+    # Build jobs run concurrently and upload artifacts per version. The single
+    # deploy job below collects all artifacts and publishes once, avoiding
+    # concurrent git pushes/commit conflicts to gh-pages.
     uses: ./.github/workflows/build.yaml
     with:
       reference: ${{ matrix.branch }}
       dist_version: ${{ matrix.version }}
       python_version: ${{ matrix.python_version }}
-      publish: ${{ 'true' }}
+      publish: ${{ 'false' }}
+
+  deploy:
+    # A single deploy job runs after all build matrix jobs complete.
+    # Artifacts from every concurrent build job are merged here and published
+    # once via actions/deploy-pages, eliminating concurrent gh-pages push conflicts.
+    needs: build
+    if: ${{ !cancelled() && needs.build.result != 'failure' && github.event_name != 'push' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Checkout existing gh-pages content
+        id: checkout-pages
+        uses: actions/checkout@v5
+        with:
+          ref: gh-pages
+          path: _site
+        continue-on-error: true
+
+      - name: Prepare site directory
+        run: |
+          mkdir -p _site/3
+          # Remove git metadata; safe even if checkout above did not succeed
+          rm -rf _site/.git
+
+      - name: Download all build artifacts
+        # Collect artifacts uploaded by all concurrent build matrix jobs
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Copy new archives into site directory
+        run: |
+          # Copy generated archives (zip, tar.bz2, epub) into _site/3/,
+          # excluding PDF build logs which are for debugging only.
+          find artifacts/ -type f \( -name "*.zip" -o -name "*.tar.bz2" -o -name "*.epub" \) \
+            ! -name "python-*-pdf-logs.zip" \
+            -exec cp {} _site/3/ \;
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
