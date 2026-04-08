@@ -50,7 +50,7 @@ jobs:
     # Artifacts from every concurrent build job are merged here and published
     # once via actions/deploy-pages, eliminating concurrent gh-pages push conflicts.
     needs: build
-    if: ${{ !cancelled() && needs.build.result != 'failure' }}
+    if: ${{ !cancelled() && needs.build.result != 'failure' && github.event_name != 'push' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
