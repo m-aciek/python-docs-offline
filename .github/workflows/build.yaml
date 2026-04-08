@@ -6,10 +6,6 @@ on:
         description: 'Commit reference from CPython repository'
         required: true
         default: '3.14'
-      dist_version:
-        description: 'Dist version (compatible with patchlevel.py output)'
-        required: true
-        default: '3.14'
       repository:
         description: 'Repository to checkout'
         required: false
@@ -26,10 +22,6 @@ on:
     inputs:
       reference:
         description: 'Commit reference from CPython repository'
-        default: '3.14'
-        type: string
-      dist_version:
-        description: 'Dist version (compatible with patchlevel.py output)'
         default: '3.14'
         type: string
       repository:
@@ -49,7 +41,23 @@ permissions:
   pages: write
   id-token: write
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      dist_version: ${{ steps.get-version.outputs.dist_version }}
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ inputs.python_version }}
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.reference }}
+      - id: get-version
+        run: echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> $GITHUB_OUTPUT
+        working-directory: ./Doc
   build-html:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@master
@@ -66,16 +74,17 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-html.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-html.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-html.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-html.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-html.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-html.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-html.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-html.tar.bz2
           if-no-files-found: ignore
   build-text:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@master
@@ -92,16 +101,17 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-text.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-text.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-text.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-text.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-text.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-text.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-text.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-text.tar.bz2
           if-no-files-found: ignore
   build-texinfo:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@master
@@ -119,16 +129,17 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-texinfo.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-texinfo.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-texinfo.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-texinfo.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-texinfo.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-texinfo.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-texinfo.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-texinfo.tar.bz2
           if-no-files-found: ignore
   build-epub:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@master
@@ -145,10 +156,11 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs.epub
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs.epub
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs.epub
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs.epub
           if-no-files-found: ignore
   build-pdf:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@master
@@ -166,21 +178,21 @@ jobs:
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-pdf-logs.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}-pdf-logs.zip
           path: |
             ./Doc/build/latex/*.log
             ./Doc/build/latex/*.tex
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-pdf-a4.zip
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-pdf-a4.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-pdf-a4.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ inputs.dist_version }}-docs-pdf-a4.tar.bz2
-          path: ./Doc/dist/python-${{ inputs.dist_version }}*-docs-pdf-a4.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}-docs-pdf-a4.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
   publish:
     needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
