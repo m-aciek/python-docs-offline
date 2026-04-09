@@ -68,7 +68,6 @@ jobs:
 
       - name: Prepare site directory
         run: |
-          mkdir -p _site/3
           # Remove git metadata; safe even if checkout above did not succeed
           rm -rf _site/.git
 
@@ -80,11 +79,30 @@ jobs:
 
       - name: Copy new archives into site directory
         run: |
-          # Copy generated archives (zip, tar.bz2, epub) into _site/3/,
+          # Copy generated archives (zip, tar.bz2, epub) into _site/<major_minor>/,
           # excluding PDF build logs which are for debugging only.
+          # Extract major.minor from filenames like python-3.14.0-docs-html.zip.
           find artifacts/ -type f \( -name "*.zip" -o -name "*.tar.bz2" -o -name "*.epub" \) \
-            ! -name "python-*-pdf-logs.zip" \
-            -exec cp {} _site/3/ \;
+            ! -name "python-*-pdf-logs.zip" | while read -r f; do
+            filename=$(basename "$f")
+            major_minor=$(echo "$filename" | sed -n 's/^python-\([0-9]*\.[0-9]*\).*/\1/p')
+            mkdir -p "_site/$major_minor"
+            cp "$f" "_site/$major_minor/"
+          done
+
+      - name: Symlink 3 to stable version
+        run: |
+          # Create a relative symlink _site/3 -> <stable> (e.g. 3 -> 3.14),
+          # pointing to the first "bugfix" (stable) version from release-cycle JSON.
+          stable=$(curl -sf https://peps.python.org/api/release-cycle.json | \
+            jq -r '[to_entries[] | select(.value.status == "bugfix")] | first | .key')
+          if [ -z "$stable" ]; then
+            echo "Error: no stable (bugfix) version found in release-cycle JSON" >&2
+            exit 1
+          fi
+          # Remove existing 3 directory or symlink before creating new symlink
+          rm -rf _site/3
+          ln -s "$stable" _site/3
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
