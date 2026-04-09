@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       dist_version: ${{ steps.get-version.outputs.dist_version }}
+      major_minor: ${{ steps.get-version.outputs.major_minor }}
     steps:
       - uses: actions/setup-python@master
         with:
@@ -54,7 +55,9 @@ jobs:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
       - id: get-version
-        run: echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> $GITHUB_OUTPUT
+        run: |
+          echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> $GITHUB_OUTPUT
+          echo "major_minor=$(python -c 'from tools.extensions.patchlevel import get_version_info; print(get_version_info()[0])')" >> $GITHUB_OUTPUT
         working-directory: ./Doc
   build-html:
     needs: prepare
@@ -215,7 +218,7 @@ jobs:
 
       - name: Prepare site directory
         run: |
-          mkdir -p _site/3
+          mkdir -p _site/${{ needs.prepare.outputs.major_minor }}
           # Remove git metadata; safe even if checkout above did not succeed
           rm -rf _site/.git
 
@@ -227,11 +230,11 @@ jobs:
 
       - name: Copy new archives into site directory
         run: |
-          # Copy generated archives (zip, tar.bz2, epub) into _site/3/,
+          # Copy generated archives (zip, tar.bz2, epub) into _site/<major_minor>/,
           # excluding PDF build logs which are for debugging only.
           find artifacts/ -type f \( -name "*.zip" -o -name "*.tar.bz2" -o -name "*.epub" \) \
             ! -name "python-*-pdf-logs.zip" \
-            -exec cp {} _site/3/ \;
+            -exec cp {} _site/${{ needs.prepare.outputs.major_minor }}/ \;
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
