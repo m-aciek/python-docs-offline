@@ -128,18 +128,18 @@ jobs:
                       "%Y-%m-%d %H:%M:%S UTC"
                   )
                   rows.append(
-                      f"<tr><td><a href='{quote(file_path.name)}'>{escape(file_path.name)}</a></td><td>{timestamp}</td><td>{stat.st_size}</td></tr>"
+                      f'<tr><td><a href="{quote(file_path.name)}">{escape(file_path.name)}</a></td><td>{timestamp}</td><td>{stat.st_size}</td></tr>'
                   )
 
               relative_path = f"/{version_dir.relative_to(root).as_posix()}/"
               html = [
                   "<!doctype html>",
-                  "<html lang='en'>",
-                  "<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Directory listing</title></head>",
+                  '<html lang="en">',
+                  '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Directory listing</title></head>',
                   "<body>",
                   f"<h1>Path: {escape(relative_path)}</h1>",
                   "<table>",
-                  "<thead><tr><th scope='col'>Filename</th><th scope='col'>Timestamp (UTC)</th><th scope='col'>Size (bytes)</th></tr></thead>",
+                  '<thead><tr><th scope="col">Filename</th><th scope="col">Timestamp (UTC)</th><th scope="col">Size (bytes)</th></tr></thead>',
                   "<tbody>",
                   *rows,
                   "</tbody>",
