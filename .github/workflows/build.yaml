@@ -236,6 +236,51 @@ jobs:
             ! -name "python-*-pdf-logs.zip" \
             -exec cp {} _site/${{ needs.prepare.outputs.major_minor }}/ \;
 
+      - name: Generate per-version directory listing
+        run: |
+          python - <<'PY'
+          import re
+          from datetime import datetime, timezone
+          from html import escape
+          from pathlib import Path
+
+          root = Path("_site")
+          version_pattern = re.compile(r"^\d+\.\d+$")
+          for version_dir in sorted(
+              p for p in root.iterdir() if p.is_dir() and version_pattern.match(p.name)
+          ):
+              files = sorted(
+                  p for p in version_dir.iterdir() if p.is_file() and p.name != "index.html"
+              )
+              rows = []
+              for file_path in files:
+                  stat = file_path.stat()
+                  timestamp = datetime.fromtimestamp(stat.st_mtime, timezone.utc).strftime(
+                      "%Y-%m-%d %H:%M:%S UTC"
+                  )
+                  rows.append(
+                      f"<tr><td>{escape(file_path.name)}</td><td>{timestamp}</td><td>{stat.st_size}</td></tr>"
+                  )
+
+              relative_path = f"/{version_dir.relative_to(root).as_posix()}/"
+              html = [
+                  "<!doctype html>",
+                  "<html lang='en'>",
+                  "<head><meta charset='utf-8'><title>Directory listing</title></head>",
+                  "<body>",
+                  f"<h1>Path: {escape(relative_path)}</h1>",
+                  "<table>",
+                  "<thead><tr><th>Filename</th><th>Timestamp (UTC)</th><th>Size (bytes)</th></tr></thead>",
+                  "<tbody>",
+                  *rows,
+                  "</tbody>",
+                  "</table>",
+                  "</body>",
+                  "</html>",
+              ]
+              (version_dir / "index.html").write_text("\n".join(html) + "\n", encoding="utf-8")
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
