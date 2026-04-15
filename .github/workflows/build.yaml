@@ -62,6 +62,8 @@ jobs:
     outputs:
       dist_version: ${{ steps.get-version.outputs.dist_version }}
       major_minor: ${{ steps.get-version.outputs.major_minor }}
+      translation_ref: ${{ steps.resolve-translation.outputs.translation_ref }}
+      translation_repository: ${{ steps.resolve-translation.outputs.translation_repository }}
     steps:
       - uses: actions/setup-python@master
         with:
@@ -75,36 +77,24 @@ jobs:
           echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> "$GITHUB_OUTPUT"
           echo "major_minor=$(python -c 'from tools.extensions.patchlevel import get_version_info; print(get_version_info()[0])')" >> "$GITHUB_OUTPUT"
         working-directory: ./Doc
-  build-html:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@master
-        with:
-          python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
-        with:
-          repository: ${{ inputs.repository }}
-          ref: ${{ inputs.reference }}
-      - name: Sync translation sources
+      - name: Resolve translation branch
+        id: resolve-translation
         if: ${{ inputs.language != 'en' }}
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
-          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
+          MAJOR_MINOR: ${{ steps.get-version.outputs.major_minor }}
         run: |
           python - <<'PY'
           import bisect
           import os
-          import pathlib
           import re
           import subprocess
-          
+
           language = os.environ["LANGUAGE_TAG"]
-          target_version = os.environ["TARGET_VERSION"]
+          target_version = os.environ["MAJOR_MINOR"]
           repo_tag = language.replace("_", "-").lower()
           repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
-          output_file = os.environ["GITHUB_OUTPUT"]
-          
+
           remote_branches = subprocess.check_output(
               ["git", "ls-remote", "--heads", repo_url], text=True
           )
@@ -117,20 +107,33 @@ jobs:
           )
           if not branches:
               raise SystemExit(f"No numeric translation branches found for {repo_url}")
-          
           branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
           target_tuple = tuple(map(int, target_version.split(".")))
           index = bisect.bisect_left(branch_tuples, target_tuple)
           chosen = branches[index] if index < len(branches) else branches[-1]
-          
-          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          subprocess.check_call(
-              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
-          )
-          with open(output_file, "a", encoding="utf-8") as file:
-              file.write(f"translation_branch={chosen}\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
+              file.write(f"translation_ref={chosen}\n")
+              file.write(f"translation_repository=python/python-docs-{repo_tag}\n")
           PY
+  build-html:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ inputs.python_version }}
+      - uses: actions/checkout@master
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.reference }}
+      - name: Checkout translation sources
+        if: ${{ inputs.language != 'en' }}
+        uses: actions/checkout@master
+        with:
+          repository: ${{ needs.prepare.outputs.translation_repository }}
+          ref: ${{ needs.prepare.outputs.translation_ref }}
+          path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -140,7 +143,7 @@ jobs:
           import json
           import os
           import shlex
-          
+
           language = os.environ["LANGUAGE_TAG"]
           config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
           common = []
@@ -153,7 +156,7 @@ jobs:
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
               file.write(f"artifact_suffix={artifact_suffix}\n")
               file.write(f"common_sphinxopts={shlex.join(common)}\n")
@@ -196,45 +199,13 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
-      - name: Sync translation sources
+      - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        env:
-          LANGUAGE_TAG: ${{ inputs.language }}
-          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
-        run: |
-          python - <<'PY'
-          import bisect
-          import os
-          import pathlib
-          import re
-          import subprocess
-          
-          language = os.environ["LANGUAGE_TAG"]
-          target_version = os.environ["TARGET_VERSION"]
-          repo_tag = language.replace("_", "-").lower()
-          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
-          remote_branches = subprocess.check_output(
-              ["git", "ls-remote", "--heads", repo_url], text=True
-          )
-          branches = sorted(
-              {
-                  match.group(1)
-                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
-              },
-              key=lambda value: tuple(map(int, value.split("."))),
-          )
-          if not branches:
-              raise SystemExit(f"No numeric translation branches found for {repo_url}")
-          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
-          target_tuple = tuple(map(int, target_version.split(".")))
-          index = bisect.bisect_left(branch_tuples, target_tuple)
-          chosen = branches[index] if index < len(branches) else branches[-1]
-          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          subprocess.check_call(
-              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
-          )
-          PY
+        uses: actions/checkout@master
+        with:
+          repository: ${{ needs.prepare.outputs.translation_repository }}
+          ref: ${{ needs.prepare.outputs.translation_ref }}
+          path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -244,7 +215,7 @@ jobs:
           import json
           import os
           import shlex
-          
+
           language = os.environ["LANGUAGE_TAG"]
           config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
           common = []
@@ -257,7 +228,7 @@ jobs:
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
               file.write(f"artifact_suffix={artifact_suffix}\n")
               file.write(f"common_sphinxopts={shlex.join(common)}\n")
@@ -300,45 +271,13 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
-      - name: Sync translation sources
+      - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        env:
-          LANGUAGE_TAG: ${{ inputs.language }}
-          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
-        run: |
-          python - <<'PY'
-          import bisect
-          import os
-          import pathlib
-          import re
-          import subprocess
-          
-          language = os.environ["LANGUAGE_TAG"]
-          target_version = os.environ["TARGET_VERSION"]
-          repo_tag = language.replace("_", "-").lower()
-          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
-          remote_branches = subprocess.check_output(
-              ["git", "ls-remote", "--heads", repo_url], text=True
-          )
-          branches = sorted(
-              {
-                  match.group(1)
-                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
-              },
-              key=lambda value: tuple(map(int, value.split("."))),
-          )
-          if not branches:
-              raise SystemExit(f"No numeric translation branches found for {repo_url}")
-          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
-          target_tuple = tuple(map(int, target_version.split(".")))
-          index = bisect.bisect_left(branch_tuples, target_tuple)
-          chosen = branches[index] if index < len(branches) else branches[-1]
-          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          subprocess.check_call(
-              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
-          )
-          PY
+        uses: actions/checkout@master
+        with:
+          repository: ${{ needs.prepare.outputs.translation_repository }}
+          ref: ${{ needs.prepare.outputs.translation_ref }}
+          path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -348,7 +287,7 @@ jobs:
           import json
           import os
           import shlex
-          
+
           language = os.environ["LANGUAGE_TAG"]
           config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
           common = []
@@ -361,7 +300,7 @@ jobs:
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
               file.write(f"artifact_suffix={artifact_suffix}\n")
               file.write(f"common_sphinxopts={shlex.join(common)}\n")
@@ -405,45 +344,13 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
-      - name: Sync translation sources
+      - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        env:
-          LANGUAGE_TAG: ${{ inputs.language }}
-          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
-        run: |
-          python - <<'PY'
-          import bisect
-          import os
-          import pathlib
-          import re
-          import subprocess
-          
-          language = os.environ["LANGUAGE_TAG"]
-          target_version = os.environ["TARGET_VERSION"]
-          repo_tag = language.replace("_", "-").lower()
-          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
-          remote_branches = subprocess.check_output(
-              ["git", "ls-remote", "--heads", repo_url], text=True
-          )
-          branches = sorted(
-              {
-                  match.group(1)
-                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
-              },
-              key=lambda value: tuple(map(int, value.split("."))),
-          )
-          if not branches:
-              raise SystemExit(f"No numeric translation branches found for {repo_url}")
-          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
-          target_tuple = tuple(map(int, target_version.split(".")))
-          index = bisect.bisect_left(branch_tuples, target_tuple)
-          chosen = branches[index] if index < len(branches) else branches[-1]
-          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          subprocess.check_call(
-              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
-          )
-          PY
+        uses: actions/checkout@master
+        with:
+          repository: ${{ needs.prepare.outputs.translation_repository }}
+          ref: ${{ needs.prepare.outputs.translation_ref }}
+          path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -453,7 +360,7 @@ jobs:
           import json
           import os
           import shlex
-          
+
           language = os.environ["LANGUAGE_TAG"]
           config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
           common = []
@@ -466,7 +373,7 @@ jobs:
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
               file.write(f"artifact_suffix={artifact_suffix}\n")
               file.write(f"common_sphinxopts={shlex.join(common)}\n")
@@ -503,45 +410,13 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
-      - name: Sync translation sources
+      - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        env:
-          LANGUAGE_TAG: ${{ inputs.language }}
-          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
-        run: |
-          python - <<'PY'
-          import bisect
-          import os
-          import pathlib
-          import re
-          import subprocess
-          
-          language = os.environ["LANGUAGE_TAG"]
-          target_version = os.environ["TARGET_VERSION"]
-          repo_tag = language.replace("_", "-").lower()
-          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
-          remote_branches = subprocess.check_output(
-              ["git", "ls-remote", "--heads", repo_url], text=True
-          )
-          branches = sorted(
-              {
-                  match.group(1)
-                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
-              },
-              key=lambda value: tuple(map(int, value.split("."))),
-          )
-          if not branches:
-              raise SystemExit(f"No numeric translation branches found for {repo_url}")
-          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
-          target_tuple = tuple(map(int, target_version.split(".")))
-          index = bisect.bisect_left(branch_tuples, target_tuple)
-          chosen = branches[index] if index < len(branches) else branches[-1]
-          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          subprocess.check_call(
-              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
-          )
-          PY
+        uses: actions/checkout@master
+        with:
+          repository: ${{ needs.prepare.outputs.translation_repository }}
+          ref: ${{ needs.prepare.outputs.translation_ref }}
+          path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -551,7 +426,7 @@ jobs:
           import json
           import os
           import shlex
-          
+
           language = os.environ["LANGUAGE_TAG"]
           config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
           common = []
@@ -564,7 +439,7 @@ jobs:
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
               file.write(f"artifact_suffix={artifact_suffix}\n")
               file.write(f"common_sphinxopts={shlex.join(common)}\n")
