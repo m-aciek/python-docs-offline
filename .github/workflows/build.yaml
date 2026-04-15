@@ -149,10 +149,10 @@ jobs:
           common = []
           if language != "en":
               common = [
-                  "-D locale_dirs=../locale",
-                  f"-D language={language}",
-                  "-D gettext_compact=0",
-                  "-D translation_progress_classes=1",
+                  "-D", "locale_dirs=../locale",
+                  "-D", f"language={language}",
+                  "-D", "gettext_compact=0",
+                  "-D", "translation_progress_classes=1",
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
@@ -211,10 +211,10 @@ jobs:
           common = []
           if language != "en":
               common = [
-                  "-D locale_dirs=../locale",
-                  f"-D language={language}",
-                  "-D gettext_compact=0",
-                  "-D translation_progress_classes=1",
+                  "-D", "locale_dirs=../locale",
+                  "-D", f"language={language}",
+                  "-D", "gettext_compact=0",
+                  "-D", "translation_progress_classes=1",
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
@@ -273,10 +273,10 @@ jobs:
           common = []
           if language != "en":
               common = [
-                  "-D locale_dirs=../locale",
-                  f"-D language={language}",
-                  "-D gettext_compact=0",
-                  "-D translation_progress_classes=1",
+                  "-D", "locale_dirs=../locale",
+                  "-D", f"language={language}",
+                  "-D", "gettext_compact=0",
+                  "-D", "translation_progress_classes=1",
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
@@ -336,10 +336,10 @@ jobs:
           common = []
           if language != "en":
               common = [
-                  "-D locale_dirs=../locale",
-                  f"-D language={language}",
-                  "-D gettext_compact=0",
-                  "-D translation_progress_classes=1",
+                  "-D", "locale_dirs=../locale",
+                  "-D", f"language={language}",
+                  "-D", "gettext_compact=0",
+                  "-D", "translation_progress_classes=1",
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
@@ -392,10 +392,10 @@ jobs:
           common = []
           if language != "en":
               common = [
-                  "-D locale_dirs=../locale",
-                  f"-D language={language}",
-                  "-D gettext_compact=0",
-                  "-D translation_progress_classes=1",
+                  "-D", "locale_dirs=../locale",
+                  "-D", f"language={language}",
+                  "-D", "gettext_compact=0",
+                  "-D", "translation_progress_classes=1",
               ]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
