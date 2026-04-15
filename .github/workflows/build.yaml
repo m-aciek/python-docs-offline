@@ -18,6 +18,14 @@ on:
         description: 'Python version used to generate docs'
         required: false
         default: '3'
+      language:
+        description: 'Language to build'
+        required: false
+        default: 'en'
+      sphinxopts_json:
+        description: 'JSON array of language-specific sphinxopts'
+        required: false
+        default: '[]'
   workflow_call:
     inputs:
       reference:
@@ -35,6 +43,14 @@ on:
       python_version:
         description: 'Python version used to generate docs'
         default: '3'
+        type: string
+      language:
+        description: 'Language to build'
+        default: 'en'
+        type: string
+      sphinxopts_json:
+        description: 'JSON array of language-specific sphinxopts'
+        default: '[]'
         type: string
 permissions:
   contents: read
@@ -56,8 +72,8 @@ jobs:
           ref: ${{ inputs.reference }}
       - id: get-version
         run: |
-          echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> $GITHUB_OUTPUT
-          echo "major_minor=$(python -c 'from tools.extensions.patchlevel import get_version_info; print(get_version_info()[0])')" >> $GITHUB_OUTPUT
+          echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> "$GITHUB_OUTPUT"
+          echo "major_minor=$(python -c 'from tools.extensions.patchlevel import get_version_info; print(get_version_info()[0])')" >> "$GITHUB_OUTPUT"
         working-directory: ./Doc
   build-html:
     needs: prepare
@@ -70,21 +86,104 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+      - name: Sync translation sources
+        if: ${{ inputs.language != 'en' }}
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
+        run: |
+          python - <<'PY'
+          import bisect
+          import os
+          import pathlib
+          import re
+          import subprocess
+          
+          language = os.environ["LANGUAGE_TAG"]
+          target_version = os.environ["TARGET_VERSION"]
+          repo_tag = language.replace("_", "-").lower()
+          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
+          output_file = os.environ["GITHUB_OUTPUT"]
+          
+          remote_branches = subprocess.check_output(
+              ["git", "ls-remote", "--heads", repo_url], text=True
+          )
+          branches = sorted(
+              {
+                  match.group(1)
+                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
+              },
+              key=lambda value: tuple(map(int, value.split("."))),
+          )
+          if not branches:
+              raise SystemExit(f"No numeric translation branches found for {repo_url}")
+          
+          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
+          target_tuple = tuple(map(int, target_version.split(".")))
+          index = bisect.bisect_left(branch_tuples, target_tuple)
+          chosen = branches[index] if index < len(branches) else branches[-1]
+          
+          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          subprocess.check_call(
+              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
+          )
+          with open(output_file, "a", encoding="utf-8") as file:
+              file.write(f"translation_branch={chosen}\n")
+          PY
+      - id: build-settings
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          SPHINXOPTS_JSON: ${{ inputs.sphinxopts_json }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          
+          language = os.environ["LANGUAGE_TAG"]
+          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          common = []
+          if language != "en":
+              common = [
+                  "-D locale_dirs=../locale",
+                  f"-D language={language}",
+                  "-D gettext_compact=0",
+                  "-D translation_progress_classes=1",
+              ]
+          artifact_suffix = "" if language == "en" else f"-{language}"
+          pdf = [*common, *config_sphinxopts]
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
+              file.write(f"artifact_suffix={artifact_suffix}\n")
+              file.write(f"common_sphinxopts={shlex.join(common)}\n")
+              file.write(f"pdf_sphinxopts={shlex.join(pdf)}\n")
+          PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-html
+      - run: make dist-html SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
+      - name: Rename distribution files for translations
+        if: ${{ inputs.language != 'en' }}
+        run: |
+          version='${{ needs.prepare.outputs.dist_version }}'
+          language='${{ inputs.language }}'
+          for archive in ./Doc/dist/python-"$version"*; do
+            [ -f "$archive" ] || continue
+            renamed="${archive/python-$version/python-$version-$language}"
+            mv "$archive" "$renamed"
+          done
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-html.zip
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-html.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-html.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-html.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-html.tar.bz2
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-html.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-html.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-html.tar.bz2
           if-no-files-found: ignore
   build-text:
     needs: prepare
@@ -97,21 +196,98 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+      - name: Sync translation sources
+        if: ${{ inputs.language != 'en' }}
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
+        run: |
+          python - <<'PY'
+          import bisect
+          import os
+          import pathlib
+          import re
+          import subprocess
+          
+          language = os.environ["LANGUAGE_TAG"]
+          target_version = os.environ["TARGET_VERSION"]
+          repo_tag = language.replace("_", "-").lower()
+          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
+          remote_branches = subprocess.check_output(
+              ["git", "ls-remote", "--heads", repo_url], text=True
+          )
+          branches = sorted(
+              {
+                  match.group(1)
+                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
+              },
+              key=lambda value: tuple(map(int, value.split("."))),
+          )
+          if not branches:
+              raise SystemExit(f"No numeric translation branches found for {repo_url}")
+          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
+          target_tuple = tuple(map(int, target_version.split(".")))
+          index = bisect.bisect_left(branch_tuples, target_tuple)
+          chosen = branches[index] if index < len(branches) else branches[-1]
+          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          subprocess.check_call(
+              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
+          )
+          PY
+      - id: build-settings
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          SPHINXOPTS_JSON: ${{ inputs.sphinxopts_json }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          
+          language = os.environ["LANGUAGE_TAG"]
+          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          common = []
+          if language != "en":
+              common = [
+                  "-D locale_dirs=../locale",
+                  f"-D language={language}",
+                  "-D gettext_compact=0",
+                  "-D translation_progress_classes=1",
+              ]
+          artifact_suffix = "" if language == "en" else f"-{language}"
+          pdf = [*common, *config_sphinxopts]
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
+              file.write(f"artifact_suffix={artifact_suffix}\n")
+              file.write(f"common_sphinxopts={shlex.join(common)}\n")
+              file.write(f"pdf_sphinxopts={shlex.join(pdf)}\n")
+          PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-text
+      - run: make dist-text SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
+      - name: Rename distribution files for translations
+        if: ${{ inputs.language != 'en' }}
+        run: |
+          version='${{ needs.prepare.outputs.dist_version }}'
+          language='${{ inputs.language }}'
+          for archive in ./Doc/dist/python-"$version"*; do
+            [ -f "$archive" ] || continue
+            renamed="${archive/python-$version/python-$version-$language}"
+            mv "$archive" "$renamed"
+          done
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-text.zip
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-text.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-text.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-text.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-text.tar.bz2
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-text.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-text.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-text.tar.bz2
           if-no-files-found: ignore
   build-texinfo:
     needs: prepare
@@ -124,22 +300,99 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+      - name: Sync translation sources
+        if: ${{ inputs.language != 'en' }}
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
+        run: |
+          python - <<'PY'
+          import bisect
+          import os
+          import pathlib
+          import re
+          import subprocess
+          
+          language = os.environ["LANGUAGE_TAG"]
+          target_version = os.environ["TARGET_VERSION"]
+          repo_tag = language.replace("_", "-").lower()
+          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
+          remote_branches = subprocess.check_output(
+              ["git", "ls-remote", "--heads", repo_url], text=True
+          )
+          branches = sorted(
+              {
+                  match.group(1)
+                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
+              },
+              key=lambda value: tuple(map(int, value.split("."))),
+          )
+          if not branches:
+              raise SystemExit(f"No numeric translation branches found for {repo_url}")
+          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
+          target_tuple = tuple(map(int, target_version.split(".")))
+          index = bisect.bisect_left(branch_tuples, target_tuple)
+          chosen = branches[index] if index < len(branches) else branches[-1]
+          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          subprocess.check_call(
+              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
+          )
+          PY
+      - id: build-settings
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          SPHINXOPTS_JSON: ${{ inputs.sphinxopts_json }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          
+          language = os.environ["LANGUAGE_TAG"]
+          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          common = []
+          if language != "en":
+              common = [
+                  "-D locale_dirs=../locale",
+                  f"-D language={language}",
+                  "-D gettext_compact=0",
+                  "-D translation_progress_classes=1",
+              ]
+          artifact_suffix = "" if language == "en" else f"-{language}"
+          pdf = [*common, *config_sphinxopts]
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
+              file.write(f"artifact_suffix={artifact_suffix}\n")
+              file.write(f"common_sphinxopts={shlex.join(common)}\n")
+              file.write(f"pdf_sphinxopts={shlex.join(pdf)}\n")
+          PY
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update && sudo apt-get install -y texinfo
-      - run: make dist-texinfo
+      - run: make dist-texinfo SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
+      - name: Rename distribution files for translations
+        if: ${{ inputs.language != 'en' }}
+        run: |
+          version='${{ needs.prepare.outputs.dist_version }}'
+          language='${{ inputs.language }}'
+          for archive in ./Doc/dist/python-"$version"*; do
+            [ -f "$archive" ] || continue
+            renamed="${archive/python-$version/python-$version-$language}"
+            mv "$archive" "$renamed"
+          done
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-texinfo.zip
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-texinfo.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-texinfo.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-texinfo.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-texinfo.tar.bz2
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-texinfo.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-texinfo.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-texinfo.tar.bz2
           if-no-files-found: ignore
   build-epub:
     needs: prepare
@@ -152,15 +405,92 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+      - name: Sync translation sources
+        if: ${{ inputs.language != 'en' }}
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
+        run: |
+          python - <<'PY'
+          import bisect
+          import os
+          import pathlib
+          import re
+          import subprocess
+          
+          language = os.environ["LANGUAGE_TAG"]
+          target_version = os.environ["TARGET_VERSION"]
+          repo_tag = language.replace("_", "-").lower()
+          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
+          remote_branches = subprocess.check_output(
+              ["git", "ls-remote", "--heads", repo_url], text=True
+          )
+          branches = sorted(
+              {
+                  match.group(1)
+                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
+              },
+              key=lambda value: tuple(map(int, value.split("."))),
+          )
+          if not branches:
+              raise SystemExit(f"No numeric translation branches found for {repo_url}")
+          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
+          target_tuple = tuple(map(int, target_version.split(".")))
+          index = bisect.bisect_left(branch_tuples, target_tuple)
+          chosen = branches[index] if index < len(branches) else branches[-1]
+          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          subprocess.check_call(
+              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
+          )
+          PY
+      - id: build-settings
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          SPHINXOPTS_JSON: ${{ inputs.sphinxopts_json }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          
+          language = os.environ["LANGUAGE_TAG"]
+          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          common = []
+          if language != "en":
+              common = [
+                  "-D locale_dirs=../locale",
+                  f"-D language={language}",
+                  "-D gettext_compact=0",
+                  "-D translation_progress_classes=1",
+              ]
+          artifact_suffix = "" if language == "en" else f"-{language}"
+          pdf = [*common, *config_sphinxopts]
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
+              file.write(f"artifact_suffix={artifact_suffix}\n")
+              file.write(f"common_sphinxopts={shlex.join(common)}\n")
+              file.write(f"pdf_sphinxopts={shlex.join(pdf)}\n")
+          PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-epub
+      - run: make dist-epub SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
+      - name: Rename distribution files for translations
+        if: ${{ inputs.language != 'en' }}
+        run: |
+          version='${{ needs.prepare.outputs.dist_version }}'
+          language='${{ inputs.language }}'
+          for archive in ./Doc/dist/python-"$version"*; do
+            [ -f "$archive" ] || continue
+            renamed="${archive/python-$version/python-$version-$language}"
+            mv "$archive" "$renamed"
+          done
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs.epub
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs.epub
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs.epub
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs.epub
           if-no-files-found: ignore
   build-pdf:
     needs: prepare
@@ -173,32 +503,109 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+      - name: Sync translation sources
+        if: ${{ inputs.language != 'en' }}
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          TARGET_VERSION: ${{ needs.prepare.outputs.major_minor }}
+        run: |
+          python - <<'PY'
+          import bisect
+          import os
+          import pathlib
+          import re
+          import subprocess
+          
+          language = os.environ["LANGUAGE_TAG"]
+          target_version = os.environ["TARGET_VERSION"]
+          repo_tag = language.replace("_", "-").lower()
+          repo_url = f"https://github.com/python/python-docs-{repo_tag}.git"
+          remote_branches = subprocess.check_output(
+              ["git", "ls-remote", "--heads", repo_url], text=True
+          )
+          branches = sorted(
+              {
+                  match.group(1)
+                  for match in re.finditer(r"refs/heads/([0-9]+\.[0-9]+)$", remote_branches, re.M)
+              },
+              key=lambda value: tuple(map(int, value.split("."))),
+          )
+          if not branches:
+              raise SystemExit(f"No numeric translation branches found for {repo_url}")
+          branch_tuples = [tuple(map(int, value.split("."))) for value in branches]
+          target_tuple = tuple(map(int, target_version.split(".")))
+          index = bisect.bisect_left(branch_tuples, target_tuple)
+          chosen = branches[index] if index < len(branches) else branches[-1]
+          destination = pathlib.Path("Doc") / "locale" / language / "LC_MESSAGES"
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          subprocess.check_call(
+              ["git", "clone", "--branch", chosen, "--single-branch", repo_url, str(destination)]
+          )
+          PY
+      - id: build-settings
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+          SPHINXOPTS_JSON: ${{ inputs.sphinxopts_json }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          
+          language = os.environ["LANGUAGE_TAG"]
+          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          common = []
+          if language != "en":
+              common = [
+                  "-D locale_dirs=../locale",
+                  f"-D language={language}",
+                  "-D gettext_compact=0",
+                  "-D translation_progress_classes=1",
+              ]
+          artifact_suffix = "" if language == "en" else f"-{language}"
+          pdf = [*common, *config_sphinxopts]
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as file:
+              file.write(f"artifact_suffix={artifact_suffix}\n")
+              file.write(f"common_sphinxopts={shlex.join(common)}\n")
+              file.write(f"pdf_sphinxopts={shlex.join(pdf)}\n")
+          PY
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update && sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy librsvg2-bin
-      - run: make dist-pdf
+      - run: make dist-pdf SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
+      - name: Rename distribution files for translations
+        if: ${{ inputs.language != 'en' }}
+        run: |
+          version='${{ needs.prepare.outputs.dist_version }}'
+          language='${{ inputs.language }}'
+          for archive in ./Doc/dist/python-"$version"*; do
+            [ -f "$archive" ] || continue
+            renamed="${archive/python-$version/python-$version-$language}"
+            mv "$archive" "$renamed"
+          done
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-pdf-logs.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-pdf-logs.zip
           path: |
             ./Doc/build/latex/*.log
             ./Doc/build/latex/*.tex
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-pdf-a4.zip
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-pdf-a4.zip
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-pdf-a4.zip
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-pdf-a4.zip
           if-no-files-found: ignore
       - uses: actions/upload-artifact@master
         if: always()
         with:
-          name: python-${{ needs.prepare.outputs.dist_version }}-docs-pdf-a4.tar.bz2
-          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-pdf-a4.tar.bz2
+          name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-pdf-a4.tar.bz2
+          path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}*-docs-pdf-a4.tar.bz2
           if-no-files-found: ignore
   publish:
-    needs: [build-html, build-text, build-texinfo, build-epub, build-pdf]
+    needs: [prepare, build-html, build-text, build-texinfo, build-epub, build-pdf]
     if: ${{ !cancelled() && inputs.publish == 'true' }}
     runs-on: ubuntu-latest
     environment:

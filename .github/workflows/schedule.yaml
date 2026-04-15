@@ -23,12 +23,53 @@ jobs:
     outputs:
       versions: ${{ steps.get-versions.outputs.versions }}
     steps:
-      - name: Get supported Python versions
+      - name: Get supported Python versions and translations
         id: get-versions
         run: |
-          versions=$(curl -sf https://peps.python.org/api/release-cycle.json | \
-            jq -c '[to_entries[] | select(.value.status != "end-of-life" and .value.status != "planned") | {branch: (.value.branch // .key), python_version: (if .key == "3.10" then "3.12" else "3" end)}]')
-          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import tomllib
+          from urllib.request import urlopen
+          
+          with urlopen("https://peps.python.org/api/release-cycle.json", timeout=30) as response:
+              release_cycle = json.load(response)
+          
+          versions = [
+              {
+                  "branch": release.get("branch") or version,
+                  "python_version": "3.12" if version == "3.10" else "3",
+              }
+              for version, release in release_cycle.items()
+              if release.get("status") not in {"end-of-life", "planned"}
+          ]
+          
+          with urlopen(
+              "https://raw.githubusercontent.com/python/docsbuild-scripts/main/config.toml",
+              timeout=30,
+          ) as response:
+              config = tomllib.loads(response.read().decode("utf-8"))
+          
+          defaults = config.get("defaults", {})
+          default_in_prod = defaults.get("in_prod", True)
+          default_sphinxopts = defaults.get("sphinxopts", [])
+          
+          languages = []
+          for language, language_config in config.get("languages", {}).items():
+              if not language_config.get("in_prod", default_in_prod):
+                  continue
+              languages.append(
+                  {
+                      "language": language,
+                      "sphinxopts_json": json.dumps(
+                          language_config.get("sphinxopts", default_sphinxopts),
+                          ensure_ascii=False,
+                      ),
+                  }
+              )
+          
+          matrix = [{**version, **language} for version in versions for language in languages]
+          print(f"versions={json.dumps(matrix, ensure_ascii=False)}")
+          PY
   build:
     needs: get-versions
     strategy:
@@ -42,6 +83,8 @@ jobs:
     with:
       reference: ${{ matrix.branch }}
       python_version: ${{ matrix.python_version }}
+      language: ${{ matrix.language }}
+      sphinxopts_json: ${{ matrix.sphinxopts_json }}
       publish: ${{ 'false' }}
 
   deploy:
