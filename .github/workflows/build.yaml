@@ -245,6 +245,17 @@ jobs:
           from pathlib import Path
           from urllib.parse import quote
 
+          def format_size(size_bytes: int) -> str:
+              units = ["B", "KiB", "MiB", "GiB", "TiB"]
+              size = float(size_bytes)
+              unit_index = 0
+              while size >= 1024 and unit_index < len(units) - 1:
+                  size /= 1024
+                  unit_index += 1
+              if unit_index == 0:
+                  return f"{size_bytes} {units[unit_index]}"
+              return f"{size:.1f} {units[unit_index]}"
+
           root = Path("_site")
           version_pattern = re.compile(r"^\d+\.\d+$")
           for version_dir in sorted(
@@ -259,8 +270,9 @@ jobs:
                   timestamp = datetime.fromtimestamp(stat.st_mtime, timezone.utc).strftime(
                       "%Y-%m-%d %H:%M:%S UTC"
                   )
+                  size = format_size(stat.st_size)
                   rows.append(
-                      f'<tr><td><a href="{quote(file_path.name)}">{escape(file_path.name)}</a></td><td>{timestamp}</td><td>{stat.st_size}</td></tr>'
+                      f'<tr><td><a href="{quote(file_path.name)}">{escape(file_path.name)}</a></td><td>{timestamp}</td><td>{size}</td></tr>'
                   )
 
               relative_path = f"/{version_dir.relative_to(root).as_posix()}/"
@@ -271,7 +283,7 @@ jobs:
                   "<body>",
                   f"<h1>Path: {escape(relative_path)}</h1>",
                   "<table>",
-                  '<thead><tr><th scope="col">Filename</th><th scope="col">Timestamp (UTC)</th><th scope="col">Size (bytes)</th></tr></thead>',
+                  '<thead><tr><th scope="col">Filename</th><th scope="col">Timestamp (UTC)</th><th scope="col">Size</th></tr></thead>',
                   "<tbody>",
                   *rows,
                   "</tbody>",
