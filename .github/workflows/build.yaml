@@ -148,12 +148,21 @@ jobs:
           config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
+              try:
+                  import re
+                  with open("Doc/requirements.txt") as f:
+                      m = re.search(r"(?i)^sphinx[=<>!~\s]*(\d+)\.(\d+)", f.read(), re.MULTILINE)
+                  sphinx_ver = (int(m.group(1)), int(m.group(2))) if m else (99, 0)
+              except FileNotFoundError:
+                  sphinx_ver = (99, 0)
               common = [
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "translation_progress_classes=1",
+                  "-D", "exclude_patterns=locale/**",
               ]
+              if sphinx_ver >= (7, 1):
+                  common += ["-D", "translation_progress_classes=1"]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
 
@@ -210,12 +219,21 @@ jobs:
           config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
+              try:
+                  import re
+                  with open("Doc/requirements.txt") as f:
+                      m = re.search(r"(?i)^sphinx[=<>!~\s]*(\d+)\.(\d+)", f.read(), re.MULTILINE)
+                  sphinx_ver = (int(m.group(1)), int(m.group(2))) if m else (99, 0)
+              except FileNotFoundError:
+                  sphinx_ver = (99, 0)
               common = [
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "translation_progress_classes=1",
+                  "-D", "exclude_patterns=locale/**",
               ]
+              if sphinx_ver >= (7, 1):
+                  common += ["-D", "translation_progress_classes=1"]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
 
@@ -272,12 +290,21 @@ jobs:
           config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
+              try:
+                  import re
+                  with open("Doc/requirements.txt") as f:
+                      m = re.search(r"(?i)^sphinx[=<>!~\s]*(\d+)\.(\d+)", f.read(), re.MULTILINE)
+                  sphinx_ver = (int(m.group(1)), int(m.group(2))) if m else (99, 0)
+              except FileNotFoundError:
+                  sphinx_ver = (99, 0)
               common = [
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "translation_progress_classes=1",
+                  "-D", "exclude_patterns=locale/**",
               ]
+              if sphinx_ver >= (7, 1):
+                  common += ["-D", "translation_progress_classes=1"]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
 
@@ -335,12 +362,21 @@ jobs:
           config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
+              try:
+                  import re
+                  with open("Doc/requirements.txt") as f:
+                      m = re.search(r"(?i)^sphinx[=<>!~\s]*(\d+)\.(\d+)", f.read(), re.MULTILINE)
+                  sphinx_ver = (int(m.group(1)), int(m.group(2))) if m else (99, 0)
+              except FileNotFoundError:
+                  sphinx_ver = (99, 0)
               common = [
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "translation_progress_classes=1",
+                  "-D", "exclude_patterns=locale/**",
               ]
+              if sphinx_ver >= (7, 1):
+                  common += ["-D", "translation_progress_classes=1"]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
 
@@ -391,12 +427,21 @@ jobs:
           config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
+              try:
+                  import re
+                  with open("Doc/requirements.txt") as f:
+                      m = re.search(r"(?i)^sphinx[=<>!~\s]*(\d+)\.(\d+)", f.read(), re.MULTILINE)
+                  sphinx_ver = (int(m.group(1)), int(m.group(2))) if m else (99, 0)
+              except FileNotFoundError:
+                  sphinx_ver = (99, 0)
               common = [
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "translation_progress_classes=1",
+                  "-D", "exclude_patterns=locale/**",
               ]
+              if sphinx_ver >= (7, 1):
+                  common += ["-D", "translation_progress_classes=1"]
           artifact_suffix = "" if language == "en" else f"-{language}"
           pdf = [*common, *config_sphinxopts]
 
