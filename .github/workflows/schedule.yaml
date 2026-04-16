@@ -113,12 +113,14 @@ jobs:
           from pathlib import Path
           from urllib.parse import quote
 
+          BYTES_PER_UNIT = 1024
+
           def format_size(size_bytes: int) -> str:
               units = ["B", "KiB", "MiB", "GiB", "TiB"]
               size = float(size_bytes)
               unit_index = 0
-              while size >= 1024 and unit_index < len(units) - 1:
-                  size /= 1024
+              while size >= BYTES_PER_UNIT and unit_index < len(units) - 1:
+                  size /= BYTES_PER_UNIT
                   unit_index += 1
               if unit_index == 0:
                   return f"{size_bytes} {units[unit_index]}"
