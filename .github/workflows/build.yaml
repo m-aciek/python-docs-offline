@@ -159,7 +159,7 @@ jobs:
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "exclude_patterns=locale/**",
+                  "-D", "exclude_patterns=includes/*.rst,venv/*,README.rst,locale/**",
               ]
               if sphinx_ver >= (7, 1):
                   common += ["-D", "translation_progress_classes=1"]
@@ -230,7 +230,7 @@ jobs:
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "exclude_patterns=locale/**",
+                  "-D", "exclude_patterns=includes/*.rst,venv/*,README.rst,locale/**",
               ]
               if sphinx_ver >= (7, 1):
                   common += ["-D", "translation_progress_classes=1"]
@@ -301,7 +301,7 @@ jobs:
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "exclude_patterns=locale/**",
+                  "-D", "exclude_patterns=includes/*.rst,venv/*,README.rst,locale/**",
               ]
               if sphinx_ver >= (7, 1):
                   common += ["-D", "translation_progress_classes=1"]
@@ -373,7 +373,7 @@ jobs:
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "exclude_patterns=locale/**",
+                  "-D", "exclude_patterns=includes/*.rst,venv/*,README.rst,locale/**",
               ]
               if sphinx_ver >= (7, 1):
                   common += ["-D", "translation_progress_classes=1"]
@@ -438,7 +438,7 @@ jobs:
                   "-D", "locale_dirs=locale",
                   "-D", f"language={language}",
                   "-D", "gettext_compact=0",
-                  "-D", "exclude_patterns=locale/**",
+                  "-D", "exclude_patterns=includes/*.rst,venv/*,README.rst,locale/**",
               ]
               if sphinx_ver >= (7, 1):
                   common += ["-D", "translation_progress_classes=1"]
