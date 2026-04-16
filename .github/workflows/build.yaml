@@ -173,7 +173,7 @@ jobs:
           PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-html SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-html SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
         if: always()
@@ -244,7 +244,7 @@ jobs:
           PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-text SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-text SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
         if: always()
@@ -316,7 +316,7 @@ jobs:
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update && sudo apt-get install -y texinfo
-      - run: make dist-texinfo SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-texinfo SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
         if: always()
@@ -387,7 +387,7 @@ jobs:
           PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-epub SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-epub SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
         if: always()
@@ -453,7 +453,7 @@ jobs:
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update && sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy librsvg2-bin
-      - run: make dist-pdf SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
+      - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
         if: always()
