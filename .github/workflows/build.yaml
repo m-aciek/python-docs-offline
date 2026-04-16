@@ -145,7 +145,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
               common = [
@@ -207,7 +207,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
               common = [
@@ -269,7 +269,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
               common = [
@@ -332,7 +332,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
               common = [
@@ -388,7 +388,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = json.loads(os.environ["SPHINXOPTS_JSON"])
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
           common = []
           if language != "en":
               common = [
