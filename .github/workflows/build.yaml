@@ -465,6 +465,14 @@ jobs:
           esac
       - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
+      - name: Dump LaTeX log tails on failure
+        if: failure()
+        run: |
+          set -euxo pipefail
+          for f in Doc/build/latex/*.log; do
+            echo "===== $f (tail) ====="
+            tail -n 80 "$f" || true
+          done
       - uses: actions/upload-artifact@master
         if: always()
         with:
