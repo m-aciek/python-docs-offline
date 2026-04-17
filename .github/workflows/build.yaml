@@ -457,11 +457,12 @@ jobs:
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
         run: |
+          LANGUAGE_TAG=$(echo "$LANGUAGE_TAG" | tr '_' '-' | tr '[:upper:]' '[:lower:]')
           case "$LANGUAGE_TAG" in
             pt-br) sudo apt-get install -y texlive-lang-portuguese ;;
             zh-tw|zh-cn) sudo apt-get install -y texlive-lang-chinese ;;
             ko) sudo apt-get install -y texlive-lang-korean ;;
-            ja) sudo apt-get install -y texlive-lang-japanese ;;
+            ja) sudo apt-get install -y texlive-lang-japanese luaotfload texlive-plain-generic ;;
           esac
       - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
@@ -511,9 +512,13 @@ jobs:
           path: _site
         continue-on-error: true
 
+      - name: Normalize language tag for publishing
+        id: normalize-lang
+        run: echo "tag=$(echo '${{ inputs.language }}' | tr '_' '-' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Prepare site directory
         run: |
-          mkdir -p _site/${{ inputs.language }}/${{ needs.prepare.outputs.major_minor }}
+          mkdir -p _site/${{ steps.normalize-lang.outputs.tag }}/${{ needs.prepare.outputs.major_minor }}
           # Remove git metadata; safe even if checkout above did not succeed
           rm -rf _site/.git
 
@@ -529,7 +534,7 @@ jobs:
           # excluding PDF build logs which are for debugging only.
           find artifacts/ -type f \( -name "*.zip" -o -name "*.tar.bz2" -o -name "*.epub" \) \
             ! -name "python-*-pdf-logs.zip" \
-            -exec cp {} _site/${{ inputs.language }}/${{ needs.prepare.outputs.major_minor }}/ \;
+            -exec cp {} _site/${{ steps.normalize-lang.outputs.tag }}/${{ needs.prepare.outputs.major_minor }}/ \;
 
       - name: Generate per-version directory listing
         run: |
