@@ -453,6 +453,16 @@ jobs:
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update && sudo apt-get install -y latexmk texlive-xetex fonts-freefont-otf xindy librsvg2-bin
+      - name: Install language-specific texlive packages
+        env:
+          LANGUAGE_TAG: ${{ inputs.language }}
+        run: |
+          case "$LANGUAGE_TAG" in
+            pt-br) sudo apt-get install -y texlive-lang-portuguese ;;
+            zh-tw|zh-cn) sudo apt-get install -y texlive-lang-chinese ;;
+            ko) sudo apt-get install -y texlive-lang-korean ;;
+            ja) sudo apt-get install -y texlive-lang-japanese ;;
+          esac
       - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
       - uses: actions/upload-artifact@master
