@@ -462,7 +462,7 @@ jobs:
             pt-br) sudo apt-get install -y texlive-lang-portuguese ;;
             zh-tw|zh-cn) sudo apt-get install -y texlive-lang-chinese ;;
             ko) sudo apt-get install -y texlive-lang-korean ;;
-            ja) sudo apt-get install -y latexmk xindy texinfo texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-lang-japanese texlive-luatex texlive-plain-generic texlive-fonts-extra fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-core fonts-dejavu fonts-freefont-otf ;;
+            ja) sudo apt-get install -y texlive-lang-japanese texlive-luatex fonts-noto-cjk-extra ;;
           esac
       - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
