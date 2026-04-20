@@ -145,7 +145,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt, posix=False)]
           common = []
           if language != "en":
               try:
@@ -216,7 +216,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt, posix=False)]
           common = []
           if language != "en":
               try:
@@ -287,7 +287,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt, posix=False)]
           common = []
           if language != "en":
               try:
@@ -359,7 +359,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt, posix=False)]
           common = []
           if language != "en":
               try:
@@ -424,7 +424,7 @@ jobs:
           import shlex
 
           language = os.environ["LANGUAGE_TAG"]
-          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt)]
+          config_sphinxopts = [token for opt in json.loads(os.environ["SPHINXOPTS_JSON"]) for token in shlex.split(opt, posix=False)]
           common = []
           if language != "en":
               try:
