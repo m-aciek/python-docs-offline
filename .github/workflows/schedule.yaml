@@ -125,8 +125,10 @@ jobs:
           # Copy generated archives (zip, tar.bz2, epub) into _site/<lang>/<major_minor>/,
           # excluding PDF build logs which are for debugging only.
           # Extract major.minor and language from filenames like:
-          #   python-3.14.0-docs-html.zip       (English)
-          #   python-3.14.0-fr-docs-html.zip    (French)
+          #   python-3.14.0-docs-html.zip       (English zip)
+          #   python-3.14.0-docs.epub           (English epub)
+          #   python-3.14.0-fr-docs-html.zip    (French zip)
+          #   python-3.14.0-fr-docs.epub        (French epub)
           python - <<'PY'
           import re
           import shutil
@@ -135,7 +137,7 @@ jobs:
           artifacts = Path("artifacts")
           site = Path("_site")
           name_re = re.compile(
-              r"^python-(\d+\.\d+)[\d.]*(?:-([a-zA-Z][a-zA-Z0-9_-]*))?-(?:docs|pdf)-"
+              r"^python-(\d+\.\d+)[\d.]*(?:-(?!docs|pdf)([a-zA-Z][a-zA-Z0-9_-]*))?-(?:docs|pdf)"
           )
           for f in artifacts.rglob("*"):
               if not f.is_file():
