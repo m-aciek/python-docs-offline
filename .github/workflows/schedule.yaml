@@ -171,6 +171,25 @@ jobs:
           rm -rf _site/en/3
           ln -s "$stable" _site/en/3
 
+      - name: Symlink bare version paths to en/ for backwards compatibility
+        run: |
+          # Create _site/<major_minor> -> en/<major_minor> symlinks so that old
+          # URLs like /3.14/ continue to work after content moved to /en/3.14/.
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          site = Path("_site")
+          en_dir = site / "en"
+          version_pattern = re.compile(r"^\d+\.\d+$")
+          for version_dir in en_dir.iterdir():
+              if not version_dir.is_dir() or not version_pattern.match(version_dir.name):
+                  continue
+              link = site / version_dir.name
+              if not link.exists() and not link.is_symlink():
+                  link.symlink_to(Path("en") / version_dir.name)
+          PY
+
       - name: Generate per-version directory listing
         run: |
           python - <<'PY'
