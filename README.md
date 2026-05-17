@@ -26,8 +26,8 @@ cycle API and the docsbuild-scripts configuration to determine which
 the [build.yaml](.github/workflows/build.yaml) reusable workflow, which checks
 out the CPython source, builds the documentation with Sphinx, and uploads the
 resulting archives as artifacts. After all builds complete, a single deploy job
-merges the artifacts into the `gh-pages` branch and publishes them to GitHub
-Pages.
+merges the successfully generated artifacts into the `gh-pages` branch and
+publishes them to GitHub Pages, even if some builds failed.
 
 ## Rejected idea
 
