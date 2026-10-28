@@ -463,6 +463,7 @@ jobs:
             zh-tw|zh-cn) sudo apt-get install -y texlive-lang-chinese ;;
             ko) sudo apt-get install -y texlive-lang-korean ;;
             ja) sudo apt-get install -y texlive-lang-japanese texlive-luatex fonts-noto-cjk-extra ;;
+            fa) sudo apt-get install -y texlive-lang-arabic ;;
           esac
       - name: Increase LaTeX pass limit for Persian
         if: ${{ inputs.language == 'fa' }}
