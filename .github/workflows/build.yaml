@@ -464,6 +464,9 @@ jobs:
             ko) sudo apt-get install -y texlive-lang-korean ;;
             ja) sudo apt-get install -y texlive-lang-japanese texlive-luatex fonts-noto-cjk-extra ;;
           esac
+      - name: Increase LaTeX pass limit for Persian
+        if: ${{ inputs.language == 'fa' }}
+        run: printf '%s\n' '$max_repeat = 10;' | sudo tee -a /etc/LatexMk
       - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
         working-directory: ./Doc
       - name: Dump LaTeX log tails on failure
