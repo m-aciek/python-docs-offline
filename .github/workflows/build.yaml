@@ -14,6 +14,7 @@ on:
         description: 'Publish to GitHub Pages'
         required: false
         default: false
+        type: boolean
       python_version:
         description: 'Python version used to generate docs'
         required: false
@@ -38,8 +39,8 @@ on:
         type: string
       publish:
         description: 'Publish to GitHub Pages'
-        default: 'false'
-        type: string
+        default: false
+        type: boolean
       python_version:
         description: 'Python version used to generate docs'
         default: '3'
@@ -52,10 +53,7 @@ on:
         description: 'JSON array of language-specific sphinxopts'
         default: '[]'
         type: string
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -65,13 +63,14 @@ jobs:
       translation_ref: ${{ steps.resolve-translation.outputs.translation_ref }}
       translation_repository: ${{ steps.resolve-translation.outputs.translation_repository }}
     steps:
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+          persist-credentials: false
       - id: get-version
         run: |
           echo "dist_version=$(python tools/extensions/patchlevel.py --short)" >> "$GITHUB_OUTPUT"
@@ -120,20 +119,22 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+          persist-credentials: false
       - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        uses: actions/checkout@master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.prepare.outputs.translation_repository }}
           ref: ${{ needs.prepare.outputs.translation_ref }}
           path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
+          persist-credentials: false
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -173,15 +174,17 @@ jobs:
           PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-html SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-html SPHINXERRORHANDLING= SPHINXOPTS="${STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS}"
         working-directory: ./Doc
-      - uses: actions/upload-artifact@master
+        env:
+          STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS: ${{ steps.build-settings.outputs.common_sphinxopts }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-html.zip
           path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-html.zip
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-html.tar.bz2
@@ -191,20 +194,22 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+          persist-credentials: false
       - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        uses: actions/checkout@master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.prepare.outputs.translation_repository }}
           ref: ${{ needs.prepare.outputs.translation_ref }}
           path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
+          persist-credentials: false
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -244,15 +249,17 @@ jobs:
           PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-text SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-text SPHINXERRORHANDLING= SPHINXOPTS="${STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS}"
         working-directory: ./Doc
-      - uses: actions/upload-artifact@master
+        env:
+          STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS: ${{ steps.build-settings.outputs.common_sphinxopts }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-text.zip
           path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-text.zip
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-text.tar.bz2
@@ -262,20 +269,22 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+          persist-credentials: false
       - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        uses: actions/checkout@master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.prepare.outputs.translation_repository }}
           ref: ${{ needs.prepare.outputs.translation_ref }}
           path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
+          persist-credentials: false
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -316,15 +325,17 @@ jobs:
       - run: make venv
         working-directory: ./Doc
       - run: sudo apt-get update && sudo apt-get install -y texinfo
-      - run: make dist-texinfo SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-texinfo SPHINXERRORHANDLING= SPHINXOPTS="${STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS}"
         working-directory: ./Doc
-      - uses: actions/upload-artifact@master
+        env:
+          STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS: ${{ steps.build-settings.outputs.common_sphinxopts }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-texinfo.zip
           path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-texinfo.zip
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-texinfo.tar.bz2
@@ -334,20 +345,22 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+          persist-credentials: false
       - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        uses: actions/checkout@master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.prepare.outputs.translation_repository }}
           ref: ${{ needs.prepare.outputs.translation_ref }}
           path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
+          persist-credentials: false
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -387,9 +400,11 @@ jobs:
           PY
       - run: make venv
         working-directory: ./Doc
-      - run: make dist-epub SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.common_sphinxopts }}"
+      - run: make dist-epub SPHINXERRORHANDLING= SPHINXOPTS="${STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS}"
         working-directory: ./Doc
-      - uses: actions/upload-artifact@master
+        env:
+          STEPS_BUILD_SETTINGS_OUTPUTS_COMMON_SPHINXOPTS: ${{ steps.build-settings.outputs.common_sphinxopts }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs.epub
@@ -399,20 +414,22 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ inputs.python_version }}
-      - uses: actions/checkout@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.reference }}
+          persist-credentials: false
       - name: Checkout translation sources
         if: ${{ inputs.language != 'en' }}
-        uses: actions/checkout@master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.prepare.outputs.translation_repository }}
           ref: ${{ needs.prepare.outputs.translation_ref }}
           path: Doc/locale/${{ inputs.language }}/LC_MESSAGES
+          persist-credentials: false
       - id: build-settings
         env:
           LANGUAGE_TAG: ${{ inputs.language }}
@@ -465,8 +482,10 @@ jobs:
             ja) sudo apt-get install -y texlive-lang-japanese texlive-luatex fonts-noto-cjk-extra ;;
             fa) sudo apt-get install -y texlive-lang-arabic ;;
           esac
-      - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${{ steps.build-settings.outputs.pdf_sphinxopts }}"
+      - run: make dist-pdf SPHINXERRORHANDLING= SPHINXOPTS="${STEPS_BUILD_SETTINGS_OUTPUTS_PDF_SPHINXOPTS}"
         working-directory: ./Doc
+        env:
+          STEPS_BUILD_SETTINGS_OUTPUTS_PDF_SPHINXOPTS: ${{ steps.build-settings.outputs.pdf_sphinxopts }}
       - name: Dump LaTeX log tails on failure
         if: failure()
         run: |
@@ -475,20 +494,20 @@ jobs:
             echo "===== $f (tail) ====="
             tail -n 80 "$f" || true
           done
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-pdf-logs.zip
           path: |
             ./Doc/build/latex/*.log
             ./Doc/build/latex/*.tex
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-pdf-a4.zip
           path: ./Doc/dist/python-${{ needs.prepare.outputs.dist_version }}*-docs-pdf-a4.zip
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: python-${{ needs.prepare.outputs.dist_version }}${{ steps.build-settings.outputs.artifact_suffix }}-docs-pdf-a4.tar.bz2
@@ -496,36 +515,45 @@ jobs:
           if-no-files-found: ignore
   publish:
     needs: [prepare, build-html, build-text, build-texinfo, build-epub, build-pdf]
-    if: ${{ !cancelled() && inputs.publish == 'true' }}
+    if: ${{ !cancelled() && inputs.publish }}
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Configure Pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Checkout existing gh-pages content
         id: checkout-pages
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: gh-pages
           path: _site
+          persist-credentials: false
         continue-on-error: true
 
       - name: Normalize language tag for publishing
         id: normalize-lang
-        run: echo "tag=$(echo '${{ inputs.language }}' | tr '_' '-' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        run: echo "tag=$(echo '${INPUTS_LANGUAGE}' | tr '_' '-' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        env:
+          INPUTS_LANGUAGE: ${{ inputs.language }}
 
       - name: Prepare site directory
         run: |
-          mkdir -p _site/${{ steps.normalize-lang.outputs.tag }}/${{ needs.prepare.outputs.major_minor }}
+          mkdir -p _site/${STEPS_NORMALIZE_LANG_OUTPUTS_TAG}/${NEEDS_PREPARE_OUTPUTS_MAJOR_MINOR}
           # Remove git metadata; safe even if checkout above did not succeed
           rm -rf _site/.git
+        env:
+          STEPS_NORMALIZE_LANG_OUTPUTS_TAG: ${{ steps.normalize-lang.outputs.tag }}
+          NEEDS_PREPARE_OUTPUTS_MAJOR_MINOR: ${{ needs.prepare.outputs.major_minor }}
 
       - name: Download all artifacts
         # Collect all build artifacts then merge into the publish directory
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: artifacts/
 
@@ -535,7 +563,10 @@ jobs:
           # excluding PDF build logs which are for debugging only.
           find artifacts/ -type f \( -name "*.zip" -o -name "*.tar.bz2" -o -name "*.epub" \) \
             ! -name "python-*-pdf-logs.zip" \
-            -exec cp {} _site/${{ steps.normalize-lang.outputs.tag }}/${{ needs.prepare.outputs.major_minor }}/ \;
+            -exec cp {} _site/${STEPS_NORMALIZE_LANG_OUTPUTS_TAG}/${NEEDS_PREPARE_OUTPUTS_MAJOR_MINOR}/ \;
+        env:
+          STEPS_NORMALIZE_LANG_OUTPUTS_TAG: ${{ steps.normalize-lang.outputs.tag }}
+          NEEDS_PREPARE_OUTPUTS_MAJOR_MINOR: ${{ needs.prepare.outputs.major_minor }}
 
       - name: Generate per-version directory listing
         run: |
@@ -585,10 +616,10 @@ jobs:
           PY
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
