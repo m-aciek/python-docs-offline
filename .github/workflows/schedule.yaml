@@ -103,7 +103,7 @@ jobs:
 
       - name: Checkout existing gh-pages content
         id: checkout-pages
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
         with:
           ref: gh-pages
           path: _site
